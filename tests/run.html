@@ -130,6 +130,25 @@
     </div>
   </div>
 
+  <!-- ── IG：貼文容器沒有任何語意屬性（真實情況）──
+       沒有 <article>、沒有 role、沒有 data-testid、沒有 aria-*，
+       class 全是無意義的 .html-div。只能從永久連結往上爬。 -->
+  <div id="ig">
+    <div class="html-div">
+      <div class="html-div">
+        <div class="html-div">
+          <a href="/joan/"><img alt="joan 的大頭貼照" src="https://x/av.jpg"
+             style="width:32px;height:32px"></a>
+          <a href="/joan/">joan</a>
+        </div>
+        <img alt="貼文照片" src="https://scontent.cdninstagram.com/v/t51/p1.jpg"
+             style="width:468px;height:468px">
+        <a href="/p/DABC123/"><time datetime="2026-08-13T10:00:00">18 小時</time></a>
+        <div class="html-div"><h1>老公六年前送我的阿婆手錶淘汰了，今天迎來新同學。</h1></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── 平台改版模擬：內文容器的 selector 整組落空 ── -->
   <div id="xbroken">
     <article data-testid="tweet">
@@ -141,9 +160,9 @@
 
 </div>
 
-<script src="../extension/src/adapters.js?v=11"></script>
-<script src="../extension/src/naming.js?v=11"></script>
-<script src="../extension/src/extract.js?v=11"></script>
-<script src="run.js?v=11"></script>
+<script src="../extension/src/adapters.js?v=12"></script>
+<script src="../extension/src/naming.js?v=12"></script>
+<script src="../extension/src/extract.js?v=12"></script>
+<script src="run.js?v=12"></script>
 </body>
 </html>

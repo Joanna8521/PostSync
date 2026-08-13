@@ -267,6 +267,28 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   check('時間抓得到', d.timeText === '3 天', d.timeText);
 }
 
+// ── Instagram ───────────────────────────────────────
+{
+  group('IG：貼文容器沒有任何語意屬性，只能從永久連結往上爬');
+  const ad = byId('instagram');
+  const scope = document.getElementById('ig');
+
+  check('主錨點 article 在這種頁面上是落空的',
+    scope.querySelectorAll('article').length === 0, '竟然有 article');
+
+  const posts = EX.outermost(ad, scope);
+  check('種子法還是認得出 1 則', posts.length === 1, `${posts.length} 則`);
+
+  const d = EX.extract(ad, posts[0]);
+  check('抓到的是貼文那一層，不是整個外框（要含圖與時間）',
+    !!(posts[0].querySelector('time') && posts[0].querySelector('img')),
+    '缺 time 或 img');
+  check('內文抓得到', d.text.includes('阿婆手錶'), d.text);
+  check('permalink 是 /p/ 那條', d.permalink.includes('/p/DABC123'), d.permalink);
+  check('大頭貼不算內容圖', !d.images.some((u) => u.includes('av.jpg')), d.images);
+  check('貼文照片有收到', d.images.some((u) => u.includes('p1.jpg')), d.images);
+}
+
 // ── 圖片 ────────────────────────────────────────────
 {
   group('圖片：頭像不收，輪播裡還沒翻到的要收');

@@ -115,6 +115,15 @@ self.POST_SYNC = {
       label: 'Instagram',
       hosts: /(^|\.)instagram\.com$/,
       post: 'article',
+      // IG 的貼文容器沒有 role／data-testid／aria-*，class 也只有 .html-div，
+      // 挑任何一個 div 當錨點下次改版就死。改用種子法：以永久連結為起點往上爬，
+      // 停在第一個同時有圖片與時間的祖先。
+      postAnchor: {
+        seed: 'a[href*="/p/"], a[href*="/reel/"]',
+        needs: ['time', 'img'],
+        maxUp: 12,
+        minHeight: 200,
+      },
       text: 'h1, ul li span[dir="auto"]',
       author: 'a[href^="/"][role="link"] span, header a',
       permalink: 'a[href*="/p/"], a[href*="/reel/"]',
@@ -123,6 +132,14 @@ self.POST_SYNC = {
       // 輪播貼文一次只把當下那張放進 DOM，不按「下一張」就只收得到第一張
       next: /^(下一張|下一個|下一頁|Next|Go forward)$/i,
       exclude: '[role="button"][tabindex], section > div > button',
+      probes: {
+        'article 標籤': 'article',
+        '貼文連結 a[href*=/p/]': 'a[href*="/p/"]',
+        'Reel 連結': 'a[href*="/reel/"]',
+        'time 元素': 'time',
+        'role=presentation': '[role="presentation"]',
+        'main': 'main',
+      },
     },
     {
       id: 'linkedin',

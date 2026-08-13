@@ -16,8 +16,35 @@
   // 留言在臉書也是 role="article"，巢狀命中要濾掉，只留最外層那一層。
   // postTest 是第二道關卡：選擇器不得不放寬（臉書的貼文沒有專屬標記）時，
   // 用它把「長得像但不是貼文」的候選擋掉，否則整個動態牆會被當成一則。
+  // 從裡面往外找貼文。
+  //
+  // IG 的貼文容器沒有任何可以當錨點的東西：沒有 role、沒有 data-testid、
+  // 沒有 aria-*，class 全是無意義的 .html-div。硬挑一個 div 當錨點，
+  // 下次改版就死，而且死的時候看起來像別的問題。
+  //
+  // 但「這則貼文的永久連結」一定存在（否則使用者也點不進去），
+  // 所以改成：以它為種子往上爬，停在第一個「同時包含圖片與時間」的祖先。
+  // 這是照語意找，不是照長相找。
+  function fromAnchor(ad, root) {
+    const cfg = ad.postAnchor;
+    const found = [];
+    for (const seed of (root || document).querySelectorAll(cfg.seed)) {
+      let cur = seed.parentElement;
+      for (let up = 0; cur && up < (cfg.maxUp || 12); up++) {
+        const ok = (cfg.needs || []).every((sel) => cur.querySelector(sel))
+          && cur.getBoundingClientRect().height >= (cfg.minHeight || 0);
+        if (ok) break;
+        cur = cur.parentElement;
+      }
+      if (cur && cur !== document.body && !found.includes(cur)) found.push(cur);
+    }
+    return found;
+  }
+
   function outermost(ad, root) {
     let all = [...(root || document).querySelectorAll(ad.post)];
+    // 主錨點落空時才走種子法。平常不跑，省得在正常頁面上多做白工。
+    if (!all.length && ad.postAnchor) all = fromAnchor(ad, root);
     if (ad.postTest) {
       all = all.filter((el) => {
         try {
