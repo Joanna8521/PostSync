@@ -74,36 +74,44 @@ Focus4ai 知識庫：
 manifest 內含固定的 `key`（公鑰），所以每個人載入後的擴充 ID 都相同：
 `mbckgmofgjkmfjofljddhgbhglfhjbom`，共用同一個 OAuth client 才會成立。
 
-## OAuth 設定（已完成，這裡留給重建時參考）
+## OAuth（想用自己的 client 才需要看）
 
-已設定好，用的是專屬於 Post Sync 的 GCP 專案 `postsync888`（專案編號 `607878852359`）。
-Post Sync **不能**跟 Mesh Sync 共用 OAuth client —— 那組綁的是 Mesh Sync 的擴充 ID；
-而且同意畫面是專案層級的，共用會讓使用者授權 Post Sync 時看到「Mesh Sync」。
+`manifest.json` 裡已經內含一組 OAuth client_id，**裝完直接按「連接 Google」就能用**，
+不需要自己設定任何東西。Chrome 擴充的 OAuth client 沒有 secret，client_id 本來就是
+公開資訊，寫在開源專案裡是標準做法。
 
-要重建的話（Google 在 2025 年把「OAuth 同意畫面」搬進了「Google 驗證平台」，
-選單位置跟舊教學不一樣，所以直接記網址）：
+想完全自主（資料流從頭到尾只經過你自己的 GCP 專案）的話，自己建一組換掉：
 
-```bash
-gcloud projects create postsync888 --name="Post Sync"
-gcloud services enable drive.googleapis.com docs.googleapis.com --project=postsync888
-```
+1. 到 [Google Cloud Console](https://console.cloud.google.com/) 建一個專案，
+   啟用 **Google Drive API** 與 **Google Docs API**：
 
-1. <https://console.cloud.google.com/auth/overview?project=postsync888> →「開始使用」，
-   應用程式名稱 `Post Sync`、目標對象選「外部」。
-2. 「資料存取權」→ 新增範圍 `.../auth/drive.file`
-   （**非敏感** scope，不需要 Google 審查，也沒有測試使用者 100 人上限）。
-3. 「目標對象」→「發布應用程式」。不發布的話只有測試名單裡的帳號能用。
-4. 「用戶端」→「建立用戶端」→ 應用程式類型選「**Chrome 擴充功能**」，
-   項目 ID 填 `mbckgmofgjkmfjofljddhgbhglfhjbom`。
-5. 把拿到的 client ID 填進 `extension/manifest.json` 的 `oauth2.client_id`。
+   ```bash
+   gcloud projects create <你的專案 ID> --name="Post Sync"
+   gcloud services enable drive.googleapis.com docs.googleapis.com --project=<你的專案 ID>
+   ```
 
-> ⚠️ **同意畫面的「應用程式標誌」不要上傳。** 一旦上傳 logo，這個 app 就會被
-> 歸入需要 Google **品牌驗證**的流程，而 `drive.file` 本來是非敏感 scope、
-> 完全不需要審查。為了一張圖換來幾天到幾週的審查等待，不划算。
-> 真的要上架商店再說，商店那邊的圖示是另一套，跟這裡無關。
+2. 「Google 驗證平台」→「開始使用」（Google 在 2025 年把「OAuth 同意畫面」
+   搬進這裡，選單位置跟舊教學不一樣）：
+   <https://console.cloud.google.com/auth/overview>
+   應用程式名稱自訂、目標對象選「外部」。
+
+3. 「資料存取權」→ 新增範圍 `.../auth/drive.file`。
+   這是**非敏感** scope，不需要 Google 審查，也沒有測試使用者 100 人上限。
+
+4. 「目標對象」→「**發布應用程式**」。留在測試中的話只有名單裡的帳號能用，
+   而且 **refresh token 七天就過期** —— 症狀是「上禮拜還好好的，今天按了就失敗」，
+   錯誤訊息完全不會提到七天這件事。
+
+5. 「用戶端」→「建立用戶端」→ 應用程式類型選「**Chrome 擴充功能**」，
+   項目 ID 填 `mbckgmofgjkmfjofljddhgbhglfhjbom`，
+   把拿到的 client ID 填進 `extension/manifest.json` 的 `oauth2.client_id`。
+
+> ⚠️ **同意畫面的「應用程式標誌」不要上傳。** 一旦上傳 logo，這個 app 就會被歸入
+> 需要 Google **品牌驗證**的流程，而 `drive.file` 本來完全不需要審查。
+> 為了一張圖換來幾天到幾週的等待，不划算。商店的圖示是另一套，跟這裡無關。
 
 `manifest.json` 的 `key`（公鑰）決定擴充 ID，而 Console 裡填的項目 ID 必須跟它一致，
-不然會一路授權失敗、而且錯誤訊息不會告訴你原因。改動 `key` 之後用這段對一次：
+不然會一路授權失敗、**而且錯誤訊息不會告訴你原因**。改動 `key` 之後用這段對一次：
 
 ```bash
 python3 -c "import json,base64,hashlib;d=base64.b64decode(json.load(open('extension/manifest.json'))['key']);print(''.join(chr(ord('a')+int(c,16)) for c in hashlib.sha256(d).hexdigest()[:32]))"
