@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Post Sync — 浮動按鈕實測</title>
+<link rel="stylesheet" href="../extension/src/toast.css">
+<style>
+  body { margin: 0; background: #f0f2f5; font-family: -apple-system, "PingFang TC", sans-serif; }
+  .feed { max-width: 600px; margin: 0 auto; padding: 20px 0 400px; }
+  [role="article"] {
+    background: #fff; border-radius: 8px; margin-bottom: 16px; padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.1);
+  }
+  .x1i10hfl { font-weight: 600; }   /* 臉書那種亂數 class，測試它不被依賴 */
+  .ph { background: #dbe1e8; border-radius: 6px; }
+  #panel {
+    position: fixed; left: 12px; bottom: 12px; z-index: 2147483647;
+    background: #111; color: #0f0; font: 12px/1.6 ui-monospace, monospace;
+    padding: 10px 12px; border-radius: 8px; max-width: 380px; white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+<div id="panel">量測中…</div>
+<div class="feed">
+
+  <div role="article" aria-posinset="1">
+    <h3><a role="link" href="/profile.php?id=1"><span class="x1i10hfl">林小美</span></a></h3>
+    <a href="/permalink/1001/?__cft__[0]=AAA"><span>3 小時</span></a>
+    <div dir="auto">
+      <span>定價這件事，先想清楚你在賣什麼。</span>
+      <span>大部分人卡在成本加成，可是客戶買的從來不是成本。</span>
+      <div role="button" tabindex="0">查看更多</div>
+    </div>
+    <div class="ph" style="height:260px;margin-top:10px"></div>
+    <div role="toolbar"><span>讚</span> <span>留言</span> <span>分享</span></div>
+    <div role="article">
+      <h3><a role="link" href="/profile.php?id=9">路人甲</a></h3>
+      <div dir="auto"><span>推爆這篇</span></div>
+    </div>
+  </div>
+
+  <div role="article" aria-posinset="2">
+    <h3><a role="link" href="/profile.php?id=2">陳大文</a></h3>
+    <a href="/permalink/1002/"><span>5 小時</span></a>
+    <div dir="auto"><span>第二則貼文，用來測捲動時按鈕會不會跟著換。</span></div>
+    <div class="ph" style="height:320px;margin-top:10px"></div>
+    <div role="toolbar"><span>讚</span> <span>留言</span> <span>分享</span></div>
+  </div>
+
+  <div role="article" aria-posinset="3">
+    <h3><a role="link" href="/profile.php?id=3">王五</a></h3>
+    <a href="/permalink/1003/"><span>1 天</span></a>
+    <div dir="auto"><span>第三則貼文。</span></div>
+    <div class="ph" style="height:300px;margin-top:10px"></div>
+    <div role="toolbar"><span>讚</span> <span>留言</span> <span>分享</span></div>
+  </div>
+
+</div>
+
+<script>
+// 假的 chrome API。content.js 一載入就會呼叫 storage 與 runtime，
+// 沒有這層它會在第一行就丟例外，然後整支安靜地不啟動。
+window.__sent = [];
+// file:// 的 location.hostname 是空字串，content.js 會認不出平台而整個不啟動。
+// 這一行只在測試頁存在。
+window.POST_SYNC_HOST = 'www.facebook.com';
+window.chrome = {
+  storage: {
+    sync: {
+      get(_keys, cb) { cb({}); },        // 什麼都沒設 → enabled 應該預設為 true
+      set(_o, cb) { cb && cb(); },
+    },
+    local: { get(_k, cb) { cb({}); }, set(_o, cb) { cb && cb(); } },
+    onChanged: { addListener() {} },
+  },
+  runtime: {
+    lastError: null,
+    sendMessage(msg, cb) {
+      window.__sent.push(msg);
+      cb && cb({ ok: true, drive: { docName: '20260813_測試_Facebook', docUrl: '#' }, f4: { chunks: 3 } });
+    },
+    onMessage: { addListener() {} },
+  },
+};
+</script>
+<script src="../extension/src/adapters.js?v=10"></script>
+<script src="../extension/src/naming.js?v=10"></script>
+<script src="../extension/src/extract.js?v=10"></script>
+<script src="../extension/src/content.js?v=10"></script>
+<script>
+// 量到底發生了什麼，不要靠眼睛猜
+function report() {
+  const btn = document.querySelector('.postsync-btn');
+  const act = document.querySelector('.postsync-active');
+  const cs = btn ? getComputedStyle(btn) : null;
+  const r = btn ? btn.getBoundingClientRect() : null;
+  const lines = [
+    `content script 注入：${document.documentElement.dataset.postSync || '❌ 沒有'}`,
+    `adapter：${self.POST_SYNC ? (self.POST_SYNC.adapterFor('www.facebook.com') || {}).id || '❌ 認不出' : '❌ 沒載到'}`,
+    `抽取層：${self.POST_SYNC_EXTRACT ? 'OK' : '❌ 沒載到'}`,
+    `偵測到貼文：${self.POST_SYNC_EXTRACT
+      ? self.POST_SYNC_EXTRACT.outermost(self.POST_SYNC.adapterFor('www.facebook.com'), document).length + ' 則'
+      : '?'}`,
+    `按鈕存在：${btn ? 'OK' : '❌ 沒有 .postsync-btn'}`,
+    btn ? `  display=${cs.display} visibility=${cs.visibility} opacity=${cs.opacity}` : '',
+    btn ? `  z-index=${cs.zIndex} position=${cs.position}` : '',
+    r ? `  位置 x=${Math.round(r.left)} y=${Math.round(r.top)} w=${Math.round(r.width)} h=${Math.round(r.height)}` : '',
+    r ? `  在視窗內：${r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight ? 'OK' : '❌ 跑出畫面'}` : '',
+    `鎖定的貼文：${act ? act.getAttribute('aria-posinset') || '有' : '❌ 沒有'}`,
+    `視窗：${innerWidth}x${innerHeight}`,
+  ].filter(Boolean);
+  document.getElementById('panel').textContent = lines.join('\n');
+}
+setTimeout(report, 900);
+window.addEventListener('scroll', () => setTimeout(report, 120), { passive: true });
+window.__report = report;
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 360px;
+    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    font-size: 13px;
+    color: #1f2937;
+    background: #ffffff;
+  }
+  header { background: #1e1b3a; color: #ffffff; padding: 14px 16px; }
+  header h1 { font-size: 16px; }
+  header p { color: #a5b4fc; font-size: 12px; margin-top: 2px; }
+  section { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row + .row { margin-top: 8px; }
+  .grow { flex: 1; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #dc2626; display: inline-block; }
+  .dot.on { background: #10704a; }
+  label.small { font-size: 11px; color: #6b7280; letter-spacing: 0.05em; }
+  input[type="text"], select {
+    width: 100%; padding: 7px 10px; border: 1px solid #d1d5db;
+    border-radius: 7px; font-size: 13px; margin-top: 4px;
+  }
+  input[type="checkbox"] { width: 15px; height: 15px; flex: none; }
+  button {
+    border: 1px solid #d1d5db; background: #ffffff; color: #374151;
+    border-radius: 7px; padding: 7px 12px; font-size: 13px;
+    cursor: pointer; white-space: nowrap;
+  }
+  button.primary {
+    background: #4f46e5; border-color: #4f46e5; color: #ffffff;
+    width: 100%; padding: 9px; font-weight: 700;
+  }
+  button:hover { filter: brightness(0.96); }
+  .hint { font-size: 11px; color: #9ca3af; margin-top: 4px; line-height: 1.6; }
+  /* 診斷訊息是多行的。不設 pre-line 會被壓成一行，
+     而那正是最需要看清楚的時候。 */
+  .msg {
+    font-size: 12px; margin-top: 6px; min-height: 15px;
+    line-height: 1.55; white-space: pre-line; word-break: break-word;
+  }
+  .msg.ok { color: #10704a; }
+  .msg.err { color: #dc2626; }
+  a, a:link, a:visited, a:hover, a:active { color: #4f46e5; }
+  .log { max-height: 150px; overflow-y: auto; }
+  .log-item {
+    padding: 6px 0; border-bottom: 1px solid #f9fafb;
+    font-size: 11.5px; line-height: 1.55; word-break: break-word;
+  }
+  .log-item:last-child { border-bottom: 0; }
+  .log-item .t { color: #9ca3af; }
+  .log-item.bad { color: #dc2626; }
+  .sub { margin-left: 23px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>⚡ Post Sync</h1>
+    <p>滑到想收的貼文，按一下就存起來</p>
+  </header>
+
+  <section>
+    <div class="row">
+      <span class="dot" id="dot"></span>
+      <span class="grow" id="connText">檢查中…</span>
+      <button id="connect">連接 Google</button>
+    </div>
+    <div class="row">
+      <input type="checkbox" id="enabled">
+      <label for="enabled" class="grow">在社群頁面顯示浮動按鈕</label>
+    </div>
+    <div class="hint">
+      也可以<b>在貼文上按右鍵 →「⚡ 收這篇貼文」</b>，指哪篇收哪篇，最不會出錯。<br>
+      想用快速鍵的話到 <b>chrome://extensions/shortcuts</b> 自己綁一組。
+    </div>
+  </section>
+
+  <section>
+    <label class="small">收藏對象（各自一個 Drive 資料夾）</label>
+    <div class="row" style="margin-top:4px">
+      <select id="profile" class="grow"></select>
+      <button id="addProfile">＋</button>
+    </div>
+    <label class="small" style="display:block;margin-top:10px">Drive 資料夾名稱</label>
+    <input type="text" id="folderName" placeholder="Post Sync 貼文收藏">
+    <div class="row" style="margin-top:10px">
+      <input type="checkbox" id="driveEnabled">
+      <label for="driveEnabled" class="grow">寫入 Google Drive（一篇一份 Doc，圖片嵌在裡面）</label>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <input type="checkbox" id="f4Enabled">
+      <label for="f4Enabled" class="grow"><b>同步到 Focus4ai 知識庫</b></label>
+    </div>
+    <div class="sub">
+      <label class="small" style="display:block;margin-top:8px">站台網址</label>
+      <input type="text" id="f4Base" placeholder="https://app.focus4ai.com">
+      <label class="small" style="display:block;margin-top:8px">資料夾</label>
+      <input type="text" id="f4Folder" placeholder="00_inbox/post-sync">
+      <div class="row" style="margin-top:8px">
+        <input type="checkbox" id="f4Private">
+        <label for="f4Private" class="grow">標記為 local_only（不送外部模型）</label>
+      </div>
+      <div class="hint">
+        社群貼文多半是公開內容，預設<b>不</b>標記，這樣才進得了檢索。
+        收私密社團的東西再打開。
+      </div>
+      <button id="f4Test" style="width:100%;margin-top:8px">測試知識庫連線</button>
+    </div>
+  </section>
+
+  <section>
+    <button class="primary" id="save">儲存設定</button>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="diag" class="grow">檢查目前分頁</button>
+      <button id="clearSeen">清除去重紀錄</button>
+    </div>
+  </section>
+
+  <section>
+    <label class="small">最近寫入</label>
+    <div class="log" id="log"></div>
+  </section>
+
+  <script src="src/defaults.js"></script>
+  <script src="src/popup.js"></script>
+</body>
+</html>

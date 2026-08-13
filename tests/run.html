@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Post Sync — 抽取層測試</title>
+<style>
+  body { font-family: -apple-system, "PingFang TC", monospace; padding: 20px; line-height: 1.7; }
+  #out { font-size: 13px; }
+  .pass { color: #10704a; }
+  .fail { color: #dc2626; font-weight: 700; }
+  .head { margin-top: 16px; font-weight: 700; border-top: 1px solid #ddd; padding-top: 10px; }
+  #summary { font-size: 18px; font-weight: 700; margin: 14px 0; }
+  #fixtures { position: absolute; left: -99999px; top: 0; width: 600px; }
+  pre { background: #f6f6f6; padding: 8px; font-size: 11px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Post Sync — 抽取層測試</h1>
+<div id="summary">執行中…</div>
+<div id="out"></div>
+
+<!-- 測試用的假 DOM。放在畫面外，但仍然參與版面計算，
+     這樣 getBoundingClientRect 才量得到真的寬高（圖片大小的判斷靠它）。 -->
+<div id="fixtures">
+
+  <!-- ── Facebook：一則貼文，裡面巢了兩則留言 ── -->
+  <div id="fb">
+    <div role="article" aria-posinset="1">
+      <h3><a role="link" href="/profile.php?id=123">林小美</a></h3>
+      <span>已贊助</span>
+      <div dir="auto">
+        <span>定價這件事，先想清楚你在賣什麼。</span>
+        <span>大部分人卡在成本加成，可是客戶買的從來不是成本。</span>
+        <div role="button" tabindex="0">查看更多</div>
+      </div>
+      <img src="https://scontent.xx.fbcdn.net/v/t39/photo_big.jpg?oh=abc"
+           width="500" height="300" style="width:500px;height:300px">
+      <img src="https://scontent.xx.fbcdn.net/v/t39/avatar.jpg"
+           width="40" height="40" style="width:40px;height:40px">
+      <a href="/permalink/998877/?__cft__[0]=ZZZ&amp;fbclid=xyz&amp;story=1">
+        <span>3 小時</span>
+      </a>
+      <div role="toolbar"><span>讚</span><span>留言</span><span>分享</span></div>
+
+      <div role="article">
+        <h3><a role="link" href="/profile.php?id=999">路人甲</a></h3>
+        <div dir="auto"><span>推爆這篇</span></div>
+        <img src="https://scontent.xx.fbcdn.net/v/t39/commenter.jpg"
+             width="300" height="300" style="width:300px;height:300px">
+        <a href="/permalink/111/?comment_id=555"><span>1 小時</span></a>
+      </div>
+      <div role="article">
+        <div dir="auto"><span>完全同意這個說法</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── X：一則推文 ── -->
+  <div id="x">
+    <article data-testid="tweet">
+      <div data-testid="User-Name"><a role="link" href="/joan">Joan</a></div>
+      <div data-testid="tweetText"><span>寫程式最難的不是寫，是刪。</span></div>
+      <div role="group"><span>Reply</span><span>Repost</span><span>Like</span></div>
+      <a href="/joan/status/1234567890?s=20&amp;t=abc"><time datetime="2026-08-13">8月13日</time></a>
+    </article>
+  </div>
+
+  <!-- ── 作者抓不到：作者名沒有包在 h2/h3 的連結裡 ──
+       真實踩到過：檔名變成「20260813_Wang Joan_Facebook」，
+       整個資料夾一排作者名，看不出哪篇是哪篇。 -->
+  <div id="fbnoauthor">
+    <div role="article">
+      <div><span>Wang Joan</span></div>
+      <a href="/permalink/2001/"><span>2 小時</span></a>
+      <div dir="auto"><span>昨晚把 CodeX 升級到最新版，結果整個壞掉。</span></div>
+    </div>
+  </div>
+
+  <!-- ── 臉書現在的動態牆結構：貼文是 div[aria-labelledby]，沒有 role="article"，
+       留言才是 role="article"。整個動態牆外面也有一層 aria-labelledby，
+       不擋掉的話會被當成「一則超大貼文」。 -->
+  <div id="fbfeed">
+    <div aria-labelledby="feedlbl">
+      <span id="feedlbl">動態消息</span>
+
+      <div aria-labelledby="a1">
+        <span id="a1">林協霆</span>
+        <a href="/htlin.lizard/posts/pfbid024AAA"><span>18小時</span></a>
+        <div data-ad-preview="message">
+          <span>觀眾現場點開隨便一家的模型</span>
+          <span>叫他分析你剛剛講的內容</span>
+          <!-- 展開之後按鈕還在，標籤變成「顯示較少」，不擋就會進內文 -->
+          <div role="button" tabindex="0">顯示較少</div>
+          <div role="button" tabindex="0">查看翻譯</div>
+        </div>
+        <div role="toolbar"><span>讚</span><span>留言</span><span>分享</span></div>
+        <div role="article">
+          <span>曾致學</span><span>·</span><span>18小時</span>
+          <div dir="auto"><span>然後開始叫AI問你問題</span></div>
+        </div>
+      </div>
+
+      <div aria-labelledby="a2">
+        <span id="a2">陳大文</span>
+        <a href="/chen/posts/pfbid024BBB"><span>2小時</span></a>
+        <div data-ad-preview="message"><span>第二則貼文的內容。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 平台改版模擬：內文容器的 selector 整組落空 ── -->
+  <div id="xbroken">
+    <article data-testid="tweet">
+      <div data-testid="User-Name"><a role="link" href="/joan">Joan</a></div>
+      <div data-testid="tweetBodyRenamed"><span>改版之後內文容器換了名字，但內容還在頁面上。</span></div>
+      <a href="/joan/status/222"><time>8月13日</time></a>
+    </article>
+  </div>
+
+</div>
+
+<script src="../extension/src/adapters.js?v=10"></script>
+<script src="../extension/src/naming.js?v=10"></script>
+<script src="../extension/src/extract.js?v=10"></script>
+<script src="run.js?v=10"></script>
+</body>
+</html>

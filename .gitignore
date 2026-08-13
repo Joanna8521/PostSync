@@ -1,0 +1,10 @@
+# 打包 .crx 用的私鑰，不進版控（manifest 裡的 key 是公鑰，公開沒問題）
+key.pem
+.DS_Store
+.claude/
+
+# 打包檔不進版控
+*.zip
+
+# 商店素材（可由 tools/ 重新產生）
+store_assets/

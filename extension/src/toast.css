@@ -1,0 +1,149 @@
+/* =====================================================
+   Post Sync — 注入頁面的 UI
+   臉書那類站台的 CSS 很兇（重設 button、蓋 a 的顏色、自己的 z-index 戰爭），
+   所以會被蓋到的屬性一律寫死，連 :visited :hover :active 都要一起寫——
+   只寫 color 的話，連結被點過就會突然變成瀏覽器預設的紫色。
+   ===================================================== */
+
+.postsync-btn {
+  position: fixed !important;
+  z-index: 2147483646 !important;
+  display: block;
+  margin: 0 !important;
+  padding: 7px 13px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #1e1b3a !important;
+  color: #ffffff !important;
+  font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  opacity: 0.92;
+  transition: opacity 0.12s, transform 0.12s;
+}
+
+.postsync-btn:hover { opacity: 1; transform: translateY(-1px); }
+.postsync-btn:disabled { opacity: 0.5; cursor: default !important; transform: none; }
+
+/* 按下去之前就看得出「會收哪一則」，不用猜 */
+.postsync-active {
+  outline: 2px solid rgba(99, 102, 241, 0.55) !important;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.postsync-toast {
+  position: fixed !important;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483647 !important;
+  max-width: 460px;
+  /* 診斷訊息會很長（往上的整條 DOM 路徑），但不能長到蓋掉整個畫面 */
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: #1e1b3a;
+  color: #ffffff;
+  font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.postsync-status-text {
+  display: block;
+  padding-right: 18px;
+  word-break: break-word;
+  /* 診斷訊息是多行的。不設這個的話換行會被壓成一行，
+     而那正是最需要看清楚的時候。 */
+  white-space: pre-line;
+}
+
+/* 不知道還要多久，但看得出它還活著 */
+.postsync-progress {
+  position: relative;
+  height: 3px;
+  margin-top: 9px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.postsync-progress i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 38%;
+  height: 100%;
+  border-radius: 2px;
+  background: #818cf8;
+  animation: postsync-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes postsync-slide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+.postsync-link,
+.postsync-link:link,
+.postsync-link:visited,
+.postsync-link:hover,
+.postsync-link:active {
+  display: inline-block;
+  margin-top: 8px;
+  color: #a5b4fc !important;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline !important;
+}
+
+.postsync-close {
+  position: absolute !important;
+  top: 8px;
+  right: 9px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+.postsync-close:hover { color: #ffffff !important; }
+
+.postsync-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.postsync-mini {
+  flex: 1;
+  padding: 6px 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  cursor: pointer !important;
+}
+
+.postsync-mini-primary {
+  border-color: #6366f1 !important;
+  background: #6366f1 !important;
+}
+
+.postsync-mini:hover { filter: brightness(1.12); }
+.postsync-mini:disabled { opacity: 0.45; cursor: default !important; }
+

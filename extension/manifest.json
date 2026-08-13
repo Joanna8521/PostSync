@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Post Sync — 社群貼文收藏器",
+  "version": "1.0.0",
+  "description": "滑到想收的社群貼文，按一下就存進你自己的 Google Drive，並可同步進 Focus4ai 知識庫。支援 Facebook / Threads / X / Instagram / LinkedIn。",
+  "permissions": [
+    "storage",
+    "identity",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*",
+    "https://m.facebook.com/*",
+    "https://www.threads.com/*",
+    "https://www.threads.net/*",
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://www.instagram.com/*",
+    "https://www.linkedin.com/*",
+    "https://*.fbcdn.net/*",
+    "https://*.cdninstagram.com/*",
+    "https://*.twimg.com/*",
+    "https://*.licdn.com/*",
+    "https://www.googleapis.com/*",
+    "https://docs.googleapis.com/*",
+    "https://drive.google.com/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "oauth2": {
+    "client_id": "607878852359-lbdvos90atjk6m63okruq8jm4avra6s0.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*",
+        "https://m.facebook.com/*",
+        "https://www.threads.com/*",
+        "https://www.threads.net/*",
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://www.instagram.com/*",
+        "https://www.linkedin.com/*"
+      ],
+      "js": [
+        "src/adapters.js",
+        "src/extract.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/toast.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "capture-post": {
+      "description": "收錄目前畫面上的這則貼文（預設沒有綁鍵，可在 chrome://extensions/shortcuts 自己設）"
+    }
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2WLlAr9eFjhWUirO0xBC5stfX23whWvoX8+a64BTphnuYO2B14r2OMFjN9gVlL9FGIV3CMuoDMOKJdCmuxXF5VVHSwdNyijDJsBUMzDLG1Y87vFQ19Ov5EisT6Hnfu8p34QC7aKicPC7opqwaH6QFZTeu7oQn8CLJXATD/aL14RtEbVnHrUxlwYfPnPZCeo44KDHnnBfnH3QYKWS8HIVuo/GNdyRUmz8F1HuysxFkOCqZ81fw6yHf/mu4hhQPuT0Z28+JxZwfauBUPwuRb8WdG9Bqw/K9voS8cK0ImYOvS4RMFZNhxNkPefMV1wLgnu7IHfUjdR/VZg9qRCnvh63vwIDAQAB"
+}
