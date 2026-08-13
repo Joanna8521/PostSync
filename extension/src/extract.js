@@ -179,8 +179,7 @@
   const JUNK_PARAMS = ['__tn__', 'ref', 'refid', 'comment_id', 'fbclid', 'rdid', 's', 't', 'igsh', 'img_index'];
 
   function permalink(ad, root, origin) {
-    if (ad.id === 'linkedin') return NS.linkedinPermalink(root);
-    if (!ad.permalink) return '';
+    if (!ad.permalink) return ad.id === 'linkedin' ? NS.linkedinPermalink(root) : '';
     for (const a of root.querySelectorAll(ad.permalink)) {
       if (!ownedBy(ad, a, root)) continue;
       const href = a.getAttribute('href') || '';
@@ -194,6 +193,8 @@
         return u.toString();
       } catch (_) { /* 組不起來就換下一個 */ }
     }
+    // 選擇器落空時的最後一招：LinkedIn 把貼文 id 放在 urn 屬性上
+    if (ad.id === 'linkedin') return NS.linkedinPermalink(root);
     return '';
   }
 

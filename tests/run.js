@@ -247,6 +247,26 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
     docStem({ text: '內容內容', author: 'a/b' }, '20260813'));
 }
 
+// ── LinkedIn ────────────────────────────────────────
+{
+  group('LinkedIn：貼文是 role="listitem"，但側欄也是');
+  const ad = byId('linkedin');
+  const scope = document.getElementById('li');
+  const posts = EX.outermost(ad, scope);
+
+  check('只認出 1 則貼文（側欄的 listitem 不算）', posts.length === 1, `${posts.length} 則`);
+
+  const d = EX.extract(ad, posts[0]);
+  check('內文抓得到', d.text.includes('招募這件事'), d.text);
+  check('沒有把「讚／留言」收進來',
+    !/(^|\n)(讚|留言)(\n|$)/.test(d.text), d.text);
+  check('作者是王大明', d.author === '王大明', d.author);
+  check('permalink 由 data-id 的 urn 組出來',
+    d.permalink === 'https://www.linkedin.com/feed/update/urn:li:activity:7654321/',
+    d.permalink);
+  check('時間抓得到', d.timeText === '3 天', d.timeText);
+}
+
 // ── 圖片 ────────────────────────────────────────────
 {
   group('圖片：頭像不收，輪播裡還沒翻到的要收');

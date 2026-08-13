@@ -468,7 +468,8 @@
     const bits = [`<${el.tagName.toLowerCase()}>`];
     for (const a of TELL_ATTRS) {
       const v = el.getAttribute(a);
-      if (v) bits.push(`${a}="${v.slice(0, 14)}"`);
+      // 截太短會害人猜：「expandable-tex」看不出完整的 testid 是什麼
+      if (v) bits.push(`${a}="${v.slice(0, 28)}"`);
     }
     const cls = usefulClasses(el);
     if (cls.length) bits.push(`.${cls.join('.')}`);

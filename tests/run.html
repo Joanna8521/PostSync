@@ -108,6 +108,28 @@
     </div>
   </div>
 
+  <!-- ── LinkedIn 現在的結構（2026）：動態牆是 role="list"，
+       一則貼文是 role="listitem"，內文在 span[data-testid^="expandable-text"]。
+       舊版的 .feed-shared-update-v2 與 data-urn 都沒有了。
+       role="listitem" 到處都是，所以側欄那種也放進來，確認不會被當成貼文。 -->
+  <div id="li">
+    <div role="list" data-testid="mainFeed">
+      <div role="listitem" data-id="urn:li:activity:7654321">
+        <div class="update-components-actor">
+          <span class="update-components-actor__title">王大明</span>
+          <span class="update-components-actor__sub-description">3 天</span>
+        </div>
+        <span data-testid="expandable-text-box">
+          <span>招募這件事，最貴的從來不是薪水。</span>
+        </span>
+        <div class="feed-shared-social-action-bar"><span>讚</span><span>留言</span></div>
+      </div>
+    </div>
+    <div role="list">
+      <div role="listitem"><span>你可能認識的人</span></div>
+    </div>
+  </div>
+
   <!-- ── 平台改版模擬：內文容器的 selector 整組落空 ── -->
   <div id="xbroken">
     <article data-testid="tweet">
@@ -119,9 +141,9 @@
 
 </div>
 
-<script src="../extension/src/adapters.js?v=10"></script>
-<script src="../extension/src/naming.js?v=10"></script>
-<script src="../extension/src/extract.js?v=10"></script>
-<script src="run.js?v=10"></script>
+<script src="../extension/src/adapters.js?v=11"></script>
+<script src="../extension/src/naming.js?v=11"></script>
+<script src="../extension/src/extract.js?v=11"></script>
+<script src="run.js?v=11"></script>
 </body>
 </html>

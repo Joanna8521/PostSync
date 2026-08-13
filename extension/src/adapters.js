@@ -128,20 +128,32 @@ self.POST_SYNC = {
       id: 'linkedin',
       label: 'LinkedIn',
       hosts: /(^|\.)linkedin\.com$/,
-      post: '.feed-shared-update-v2, [data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]',
+      // LinkedIn 現在的動態牆是 role="list"[data-testid="mainFeed"]，
+      // 一則貼文是 role="listitem"，內文在 span[data-testid^="expandable-text"]。
+      // 舊版的 .feed-shared-update-v2 與 data-urn 已經沒有了，但留著——
+      // 單篇永久連結頁與舊版面可能還在用。
+      post: '[role="listitem"], .feed-shared-update-v2,'
+        + ' [data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]',
+      // role="listitem" 到處都有（通知、側欄、搜尋結果），
+      // 所以要再確認「裡面真的有貼文的內容」才算數。
+      postTest: (el) => !el.matches('[role="listitem"]')
+        || !!el.querySelector('[data-testid^="expandable-text"], .update-components-text,'
+          + ' .update-components-actor, .feed-shared-inline-show-more-text'),
       // 平台改版時要數的候選。這一組跟臉書那組完全不同，
       // 共用一份的話等於在 LinkedIn 上量了七個必定是 0 的東西。
       probes: {
-        'data-urn': '[data-urn]',
-        'data-id=urn:li:activity': '[data-id^="urn:li:activity"]',
-        '.feed-shared-update-v2': '.feed-shared-update-v2',
-        '.fie-impression-container': '.fie-impression-container',
+        'role=listitem': '[role="listitem"]',
+        'data-testid=mainFeed': '[data-testid="mainFeed"]',
+        'expandable-text': '[data-testid^="expandable-text"]',
+        'data-urn（舊版）': '[data-urn]',
+        '.feed-shared-update-v2（舊版）': '.feed-shared-update-v2',
         '.update-components-actor': '.update-components-actor',
-        'main 底下有 data-id 的': 'main [data-id]',
       },
-      text: '.update-components-text, .feed-shared-inline-show-more-text',
-      author: '.update-components-actor__title, .update-components-actor__name',
-      permalink: null, // LinkedIn 不把 permalink 放在 DOM 上，改由 data-urn 組出來
+      text: '[data-testid^="expandable-text"], .update-components-text,'
+        + ' .feed-shared-inline-show-more-text',
+      author: '[data-testid^="actor-name"], .update-components-actor__title,'
+        + ' .update-components-actor__name, .update-components-actor a[href*="/in/"]',
+      permalink: 'a[href*="/feed/update/"], a[href*="/posts/"]',
       time: '.update-components-actor__sub-description, time',
       more: /^(…\s*more|…more|顯示更多|see more|展開)$/i,
       exclude: '.social-details-social-counts, .feed-shared-social-action-bar, .comments-comment-item',
@@ -153,11 +165,14 @@ self.POST_SYNC = {
     return self.POST_SYNC.ADAPTERS.find((a) => a.hosts.test(hostname)) || null;
   },
 
-  // LinkedIn 沒有現成的 permalink 連結，用 activity urn 組
+  // LinkedIn 常常沒有現成的 permalink 連結，用 activity urn 組。
+  // urn 可能掛在自己身上、子孫、或外層容器上，三個地方都找一次。
   linkedinPermalink(el) {
-    const urn = el.getAttribute('data-urn')
-      || (el.querySelector('[data-urn^="urn:li:activity"]') || {}).getAttribute?.('data-urn');
-    if (!urn) return '';
+    const pick = (n) => n && (n.getAttribute('data-urn') || n.getAttribute('data-id'));
+    let urn = pick(el)
+      || pick(el.querySelector('[data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]'))
+      || pick(el.closest('[data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]'));
+    if (!urn || !urn.startsWith('urn:li:activity')) return '';
     return `https://www.linkedin.com/feed/update/${urn}/`;
   },
 };
