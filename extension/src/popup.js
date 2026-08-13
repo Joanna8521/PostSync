@@ -224,6 +224,11 @@ $('diag').addEventListener('click', () => {
           lines.push(`  ${n > 0 ? '●' : '○'} ${name}：${n < 0 ? '不支援' : n}`);
         }
       }
+      // 候選全落空時，直接把畫面中央往上的 DOM 路徑報出來——
+      // 那就是「該拿什麼當錨點」的答案，不用再猜一輪
+      if (!ok && res.sample) {
+        lines.push('', '畫面中央往上的實際結構：', ...res.sample);
+      }
       // 「圖片沒收完」要能一眼看出死在哪一關：圖不在 DOM、尺寸被濾掉、
       // 被當成頭像、還是根本找不到翻頁鈕
       const m = res.media;

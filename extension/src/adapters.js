@@ -128,7 +128,17 @@ self.POST_SYNC = {
       id: 'linkedin',
       label: 'LinkedIn',
       hosts: /(^|\.)linkedin\.com$/,
-      post: '.feed-shared-update-v2, [data-urn^="urn:li:activity"]',
+      post: '.feed-shared-update-v2, [data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]',
+      // 平台改版時要數的候選。這一組跟臉書那組完全不同，
+      // 共用一份的話等於在 LinkedIn 上量了七個必定是 0 的東西。
+      probes: {
+        'data-urn': '[data-urn]',
+        'data-id=urn:li:activity': '[data-id^="urn:li:activity"]',
+        '.feed-shared-update-v2': '.feed-shared-update-v2',
+        '.fie-impression-container': '.fie-impression-container',
+        '.update-components-actor': '.update-components-actor',
+        'main 底下有 data-id 的': 'main [data-id]',
+      },
       text: '.update-components-text, .feed-shared-inline-show-more-text',
       author: '.update-components-actor__title, .update-components-actor__name',
       permalink: null, // LinkedIn 不把 permalink 放在 DOM 上，改由 data-urn 組出來

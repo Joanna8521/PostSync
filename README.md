@@ -183,6 +183,20 @@ tests/
 偵測到幾則貼文、按鈕的 `display`／`z-index`／座標、有沒有跑出畫面。
 「按鈕沒出現」的時候先看這一頁，能分辨是程式的問題還是環境的問題。
 
+**`python3 tools/check_permissions.py`** —— 權限涵蓋度。改過 `manifest.json`
+之後跑一次。
+
+match pattern 寫錯**不會有任何錯誤訊息**：Chrome 只是安靜地不注入 content
+script、或安靜地擋掉 background 的 fetch，而症狀看起來完全像別的問題
+（「這個平台沒反應」「圖片收不到」）。所以這支腳本自己實作一遍 Chrome 的
+比對規則，拿真實的網址形狀去對：
+
+- content script 的 matches 有沒有涵蓋各平台真正的網址形狀
+  （臉書的 `/photo/?fbid=`、Threads 新舊兩個網域、X 與 twitter.com…）
+- host_permissions 有沒有涵蓋四個圖床與三個 Google API
+- 反過來，有沒有**多要**權限——宣告了卻沒有任何程式會用到的，
+  只會拖慢商店審查
+
 ## 已知限制
 
 - **手機上沒有浮動按鈕。** iOS／Android 都不允許在臉書 App 裡注入 UI。

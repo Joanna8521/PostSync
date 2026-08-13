@@ -454,6 +454,15 @@
     'aria-labelledby', 'aria-describedby', 'data-visualcompletion', 'data-testid',
   ];
 
+  // 臉書的 class 是亂數（x1i10hfl），列出來只是雜訊；
+  // LinkedIn 的 class 反而是語意化的，而且是唯一認得出貼文的東西。
+  // 所以不是「要不要看 class」，是「這個 class 看起來有沒有意義」。
+  function usefulClasses(el) {
+    return [...(el.classList || [])]
+      .filter((c) => c.includes('-') && c.length > 6 && !/^x[0-9a-z]{5,}$/.test(c))
+      .slice(0, 2);
+  }
+
   function describe(el) {
     if (!el || !el.tagName) return '（沒抓到右鍵的目標）';
     const bits = [`<${el.tagName.toLowerCase()}>`];
@@ -461,6 +470,8 @@
       const v = el.getAttribute(a);
       if (v) bits.push(`${a}="${v.slice(0, 14)}"`);
     }
+    const cls = usefulClasses(el);
+    if (cls.length) bits.push(`.${cls.join('.')}`);
     return bits.join(' ');
   }
 
@@ -471,7 +482,7 @@
     let cur = el;
     let depth = 0;
     while (cur && cur.nodeType === 1 && out.length < max && depth < 40) {
-      if (TELL_ATTRS.some((a) => cur.getAttribute(a))) {
+      if (TELL_ATTRS.some((a) => cur.getAttribute(a)) || usefulClasses(cur).length) {
         const h = Math.round(cur.getBoundingClientRect().height);
         out.push(`  ↑${depth} ${describe(cur)} h=${h}`);
       }
@@ -546,6 +557,8 @@
           path: location.pathname,
           probe,
           media,
+          // 一則都認不出來時，唯一有用的是「這一頁實際長什麼樣」
+          sample: posts.length ? null : domSample(),
         });
       })();
       return true; // 非同步回覆
@@ -585,6 +598,8 @@
 
   // 平台改版時要換的錨點候選。數一遍就知道這一頁的結構長什麼樣，
   // 不用叫使用者開 DevTools 貼一堆東西回來。
+  // 基本候選（臉書系）＋ 各平台自己的。共用一份的話，
+  // 在 LinkedIn 上就是量了七個必定是 0 的東西，等於白量。
   const PROBES = {
     'role=article': '[role="article"]',
     'role=feed': '[role="feed"]',
@@ -593,7 +608,36 @@
     'article 標籤': 'article',
     'data-ad-preview': '[data-ad-preview]',
     'aria-describedby': '[aria-describedby][aria-labelledby]',
+    ...(ad.probes || {}),
   };
+
+  // 候選全落空時，唯一有用的東西是「這一頁實際長什麼樣」。
+  // 從主要內容區的中央往上爬，那條路徑就是該拿什麼當錨點的答案——
+  // 不需要我先猜對選擇器。
+  function domSample() {
+    const main = document.querySelector('main') || document.body;
+    const r = main.getBoundingClientRect();
+    const x = Math.round(r.left + r.width / 2);
+    const out = [];
+    // 取三個高度，避開剛好落在空白或分隔線的情況
+    for (const frac of [0.35, 0.55, 0.75]) {
+      const y = Math.round(Math.max(80, Math.min(window.innerHeight - 80,
+        window.innerHeight * frac)));
+      const el = document.elementFromPoint(x, y);
+      if (!el || (panelHas && panelHas(el))) continue;
+      out.push(`y=${y}　${(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24) || '（無文字）'}`);
+      out.push(...ancestry(el, 8));
+      out.push('');
+    }
+    return out.length ? out : ['（畫面中央取不到元素）'];
+  }
+
+  // 取樣時要跳過自己畫的東西，不然量到的是我們自己的 UI
+  const OWN_UI = ['.postsync-toast', '.postsync-btn'];
+
+  function panelHas(el) {
+    return !!(el.closest && el.closest(OWN_UI.join(', ')));
+  }
 
   // ── Toast ─────────────────────────────────────────
 
