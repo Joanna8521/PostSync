@@ -91,11 +91,11 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
 
   // 真實踩到過：鎖到留言區塊，於是作者變成留言者、內文混進留言
   check('作者是貼文者（aria-labelledby 指到的那個），不是留言者',
-    d.author === '林協霆', d.author);
+    d.author === '王小明', d.author);
   check('作者不是用猜的', d.authorGuessed === false, d.authorGuessed);
-  check('內文是貼文本體', d.text.includes('觀眾現場點開隨便一家的模型'), d.text);
-  check('內文沒有混進留言', !d.text.includes('然後開始叫AI問你問題'), d.text);
-  check('內文沒有把作者名收進去', !d.text.includes('林協霆'), d.text);
+  check('內文是貼文本體', d.text.includes('開會前先把想問的問題寫下來'), d.text);
+  check('內文沒有混進留言', !d.text.includes('這個我也試過，真的有用'), d.text);
+  check('內文沒有把作者名收進去', !d.text.includes('王小明'), d.text);
   check('內文沒有把時間戳收進去', !d.text.includes('18小時'), d.text);
   // 「查看更多」按下去之後標籤會變成「顯示較少」，還留在內文容器裡
   check('內文沒有「顯示較少」這種按鈕字', !d.text.includes('顯示較少'), d.text);
@@ -105,7 +105,7 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
 
   const { topicOf } = self.POST_SYNC_NAME;
   check('檔名主題是內文，不是作者名',
-    topicOf(d).includes('觀眾現場點開'), topicOf(d));
+    topicOf(d).includes('開會前先把'), topicOf(d));
 }
 
 // ── 右鍵定位 ────────────────────────────────────────
@@ -194,19 +194,19 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
     topicOf({ text: '這'.repeat(200) }).length <= 36,
     topicOf({ text: '這'.repeat(200) }).length);
 
-  // 真實踩到過的那一種：作者名沒包在 h2/h3 的連結裡 → 作者抓成空 →
-  // 內文第一行（其實是作者名）遞補成主題 → 檔名變「20260813_Wang Joan_Facebook」
+  // 真的踩過的那一種：作者名沒包在 h2/h3 的連結裡 → 作者抓成空 →
+  // 內文第一行（其實是作者名）遞補成主題 → 檔名變「20260813_陳小美_Facebook」
   group('作者選擇器落空時，作者名不可以變成檔名');
   const fbAd = byId('facebook');
   const noAuthorPost = EX.outermost(fbAd, document.getElementById('fbnoauthor'))[0];
   const d = EX.extract(fbAd, noAuthorPost);
 
   check('偵測得出「作者是猜的」', d.authorGuessed === true, d.authorGuessed);
-  check('作者退回貼文開頭那一行', d.author === 'Wang Joan', d.author);
+  check('作者退回貼文開頭那一行', d.author === '陳小美', d.author);
   check('主題是內文，不是作者名',
-    topicOf(d).includes('CodeX'), `topic=${topicOf(d)}`);
+    topicOf(d).includes('工具升級'), `topic=${topicOf(d)}`);
   check('主題不會變成作者名',
-    !topicOf(d).includes('Wang Joan'), topicOf(d));
+    !topicOf(d).includes('陳小美'), topicOf(d));
 }
 
 // ── 作者名清洗 ──────────────────────────────────────
@@ -214,20 +214,20 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   group('作者名：把身分標籤與動作按鈕的字洗掉');
   const { cleanAuthor } = EX;
 
-  // 以下三串都是真的從臉書上抓下來過的
+  // 名字是編的，但這幾種「作者名黏著什麼」的格式都是真的從臉書上遇過的
   check('洗掉「已驗證帳號」',
-    cleanAuthor('蕭上農 已驗證帳號') === '蕭上農', cleanAuthor('蕭上農 已驗證帳號'));
+    cleanAuthor('王大文 已驗證帳號') === '王大文', cleanAuthor('王大文 已驗證帳號'));
   check('洗掉「已驗證帳號 · 追蹤・分享對象：所有人」',
-    cleanAuthor('李昆謀 已驗證帳號 · 追蹤・分享對象：所有人') === '李昆謀',
-    cleanAuthor('李昆謀 已驗證帳號 · 追蹤・分享對象：所有人'));
+    cleanAuthor('林志豪 已驗證帳號 · 追蹤・分享對象：所有人') === '林志豪',
+    cleanAuthor('林志豪 已驗證帳號 · 追蹤・分享對象：所有人'));
   check('作者欄不會變成一整段內文',
-    cleanAuthor('李昆謀・一開始是在研究不同開發 Skill 的 Harness 方式，結果研究到後來發現，這是一個哲學問題的選擇。') === '李昆謀',
-    cleanAuthor('李昆謀・一開始是在研究不同開發 Skill 的 Harness 方式，結果研究到後來發現，這是一個哲學問題的選擇。'));
+    cleanAuthor('林志豪・這是一段夠長的內文，長到不可能是名字，用來確認作者欄不會把整段文章吃進去。') === '林志豪',
+    cleanAuthor('林志豪・這是一段夠長的內文，長到不可能是名字，用來確認作者欄不會把整段文章吃進去。'));
   check('時間戳不會被當成作者',
     cleanAuthor('・5小時') === '', cleanAuthor('・5小時'));
   check('臉書的反爬混淆字元洗得掉',
-    cleanAuthor('蕭上農͏ 已驗證帳號') === '蕭上農',
-    JSON.stringify(cleanAuthor('蕭上農͏ 已驗證帳號')));
+    cleanAuthor('王大文͏ 已驗證帳號') === '王大文',
+    JSON.stringify(cleanAuthor('王大文͏ 已驗證帳號')));
 }
 
 // ── 檔名 ────────────────────────────────────────────
@@ -235,9 +235,9 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   group('檔名：日期_主題_發文者');
   const { docStem, authorName } = self.POST_SYNC_NAME;
 
-  const p = { text: '這是貼文的內容第一行\n第二行', author: '李昆謀' };
+  const p = { text: '這是貼文的內容第一行\n第二行', author: '林志豪' };
   check('尾巴是發文者，不是平台',
-    docStem(p, '20260813') === '20260813_這是貼文的內容第一行_李昆謀',
+    docStem(p, '20260813') === '20260813_這是貼文的內容第一行_林志豪',
     docStem(p, '20260813'));
   check('沒有作者時給得出名字，不是空的或兩條底線',
     authorName({}) === '未署名' && !docStem({ text: 'abcd' }, '20260813').includes('__'),
@@ -280,10 +280,15 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   check('種子法還是認得出 1 則', posts.length === 1, `${posts.length} 則`);
 
   const d = EX.extract(ad, posts[0]);
-  check('抓到的是貼文那一層，不是整個外框（要含圖與時間）',
-    !!(posts[0].querySelector('time') && posts[0].querySelector('img')),
-    '缺 time 或 img');
-  check('內文抓得到', d.text.includes('阿婆手錶'), d.text);
+  // 原本這裡只檢查「有沒有 time 和 img」——外框也有，所以一直是假通過。
+  // 要釘的是「抓到的確實在 #ig 裡面」，而且沒有把別則的東西一起吞進來。
+  check('抓到的是 IG 那一則，沒有爬到外框去',
+    scope.contains(posts[0]) && posts[0] !== scope
+      && !posts[0].querySelector('[role="article"]'),
+    posts[0] === scope ? '抓到整個 #ig' : '爬出 #ig 了');
+  check('容器裡同時有圖與時間', 
+    !!(posts[0].querySelector('time') && posts[0].querySelector('img')), '缺 time 或 img');
+  check('內文抓得到', d.text.includes('光線剛好'), d.text);
   check('permalink 是 /p/ 那條', d.permalink.includes('/p/DABC123'), d.permalink);
   check('大頭貼不算內容圖', !d.images.some((u) => u.includes('av.jpg')), d.images);
   check('貼文照片有收到', d.images.some((u) => u.includes('p1.jpg')), d.images);
@@ -299,8 +304,8 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   host.style.cssText = 'position:absolute;left:-99999px;top:0;width:600px';
   host.innerHTML = `
     <article>
-      <header><img alt="joan 的大頭貼照" src="https://x/av1.jpg" style="width:150px;height:150px"></header>
-      <img alt="joan 的大頭貼照" src="https://x/av2.jpg" style="width:150px;height:150px">
+      <header><img alt="示範帳號 的大頭貼照" src="https://x/av1.jpg" style="width:150px;height:150px"></header>
+      <img alt="示範帳號 的大頭貼照" src="https://x/av2.jpg" style="width:150px;height:150px">
       <img alt="貼文第一張" src="https://x/p1.jpg" style="width:400px;height:400px">
       <img alt="輪播第二張" src="https://x/p2.jpg" style="display:none">
       <img alt="愛心圖示" src="https://x/icon.jpg" style="width:24px;height:24px">

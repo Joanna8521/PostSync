@@ -13,9 +13,6 @@
 
   const NS = self.POST_SYNC;
 
-  // 留言在臉書也是 role="article"，巢狀命中要濾掉，只留最外層那一層。
-  // postTest 是第二道關卡：選擇器不得不放寬（臉書的貼文沒有專屬標記）時，
-  // 用它把「長得像但不是貼文」的候選擋掉，否則整個動態牆會被當成一則。
   // 從裡面往外找貼文。
   //
   // IG 的貼文容器沒有任何可以當錨點的東西：沒有 role、沒有 data-testid、
@@ -41,6 +38,9 @@
     return found;
   }
 
+  // 留言在臉書也是 role="article"，巢狀命中要濾掉，只留最外層那一層。
+  // postTest 是第二道關卡：選擇器不得不放寬（臉書的貼文沒有專屬標記）時，
+  // 用它把「長得像但不是貼文」的候選擋掉，否則整個動態牆會被當成一則。
   function outermost(ad, root) {
     let all = [...(root || document).querySelectorAll(ad.post)];
     // 主錨點落空時才走種子法。平常不跑，省得在正常頁面上多做白工。
@@ -186,7 +186,7 @@
   }
 
   // 作者名旁邊常常黏著身分與動作按鈕的字：
-  //   「李昆謀 已驗證帳號 · 追蹤・分享對象：所有人」
+  //   「王小明 已驗證帳號 · 追蹤・分享對象：所有人」
   // 這些不是名字的一部分，留著就會一路變成 Doc 的標頭與檔名。
   const NAME_NOISE = /(已驗證帳號|已驗證|Verified|追蹤中|追蹤|Following|Follow|粉絲專頁|Page|贊助|Sponsored|分享對象[：:][^・·•]*|Shared with[^・·•]*)/g;
 
@@ -258,7 +258,7 @@
     const text = postText(ad, root);
 
     // 作者有三層：平台的語意標記（最準）→ 選擇器 → 猜。每一層都要洗過，
-    // 不然「蕭上農 已驗證帳號・<一串混淆字元>」會原樣變成檔名。
+    // 不然「王小明 已驗證帳號・<一串混淆字元>」會原樣變成檔名。
     let author = '';
     if (ad.authorFrom) {
       try { author = cleanAuthor(ad.authorFrom(root) || ''); } catch (_) { author = ''; }

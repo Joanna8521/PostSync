@@ -53,7 +53,7 @@ def matches(pattern: str, url: str) -> bool:
 
 CONTENT = [
     ("臉書首頁動態牆", "https://www.facebook.com/"),
-    ("臉書單篇貼文", "https://www.facebook.com/htlin.lizard/posts/pfbid024RAEV3Xa"),
+    ("臉書單篇貼文", "https://www.facebook.com/demo.user/posts/pfbid0EXAMPLE1234"),
     ("臉書相片頁", "https://www.facebook.com/photo/?fbid=10163452844983042&set=a.14"),
     ("臉書社團", "https://web.facebook.com/groups/123456789/"),
     ("臉書行動版", "https://m.facebook.com/story.php?story_fbid=1&id=2"),

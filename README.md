@@ -5,7 +5,7 @@
 Focus4ai 知識庫：
 
 - **一篇一份 Google Doc**，檔名是 `日期_主題_發文者`，例如
-  `20260813_我發現到現在還是一堆人不知道 AI 到底要怎麼開始_蕭上農`
+  `20260813_開會前先把想問的問題寫下來_王小明`
 - **圖片直接嵌在 Doc 裡**，不是存一條幾天後會失效的網址
 - **文件開頭附原文連結**，隨時跳回去看留言
 - **同一篇收第二次會先問你**，並附上先前那份的連結
@@ -205,8 +205,12 @@ script、或安靜地擋掉 background 的 fetch，而症狀看起來完全像�
   目前的寫入靠瀏覽器 session（`credentials: 'include'`），手機捷徑沒有 session。
 - **X 的長推文可能只收到截斷版。** X 的「Show more」是一條連結，
   按下去會直接跳走，所以程式不點它。收到截斷內容好過整個跳頁。
-- **LinkedIn 是盡力而為。** 它不把 permalink 放在 DOM 上，靠 `data-urn` 組，
-  版面改動也比其他平台頻繁。
+- **LinkedIn 不把 permalink 放在 DOM 上**，靠 `data-id` / `data-urn` 上的
+  activity urn 組出來。它的版面改動也比其他平台頻繁（貼文容器現在是
+  `role="listitem"`，舊版的 `.feed-shared-update-v2` 已經沒有了）。
+- **Instagram 的貼文容器沒有任何語意屬性**（沒有 `role`、沒有 `data-testid`，
+  class 全是 `.html-div`），所以改成從永久連結 `a[href*="/p/"]` 往上爬到
+  第一個同時有 `<time>` 與 `<img>` 的祖先。照語意找，不是照長相找。
 - **平台改版可能讓抓取失準。** 錨點全部集中在 `src/adapters.js`，
   改一個檔就好。抓不到內文時畫面上會明講，不會安靜地收一份空的。
 - **上架 Chrome Web Store 需要說明用途。** 宣告了 facebook.com 這類
