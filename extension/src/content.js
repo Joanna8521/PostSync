@@ -20,7 +20,9 @@
   if (!ad || !EX) return; // 認不出的網域整個不啟動
 
   // 診斷用：頁面上看得到這個屬性，就代表 content script 真的有被注入
-  document.documentElement.dataset.postSync = `1.0.0/${ad.id}`;
+  // 版號從 manifest 讀，不要寫死——寫死的遲早會跟真的對不上，
+  // 而且那種不一致不會有任何錯誤訊息。
+  document.documentElement.dataset.postSync = `${chrome.runtime.getManifest().version}/${ad.id}`;
 
   let enabled = true;
   const WATCH = ['enabled'];
