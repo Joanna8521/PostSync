@@ -411,7 +411,7 @@
           // 成功的訊息看過就好，不要一直杵在畫面上擋東西；
           // 想點「開啟 Doc」的話滑鼠移過去就會停止倒數。
           toast(`✅ 已收錄\n${(res.bits || []).join('\n')}`,
-            res.drive && res.drive.docUrl, 9000);
+            res.drive && res.drive.docUrl, 6000);
         } else {
           toast(`❌ 寫入失敗：${(res && res.error) || '未知錯誤'}`, null, 10000);
         }
@@ -688,15 +688,14 @@
       x.textContent = '✕';
       x.addEventListener('click', close);
       el.appendChild(x);
-      // 點卡片上任何一處也能收掉，不用瞄準右上角那個小叉叉
-      el.addEventListener('click', (ev) => {
-        if (ev.target.closest('a, button')) return; // 連結與按鈕維持原本行為
-        close();
-      });
+      // 卡片本身是穿透的（pointer-events: none），不能靠點它來關——
+      // 那是刻意的：它蓋在頁面右下角，而那裡常常正好是留言框。
       // 滑鼠停在卡片上就不倒數，離開才重新計時——來得及點「開啟 Doc」
+      // 用 mouseover／mouseout 而不是 mouseenter／mouseleave：卡片本身
+      // 穿透不收事件，只有連結與按鈕收得到，而那兩種事件會從子元素冒泡上來。
       const arm = () => { timer = setTimeout(close, autoHideMs); };
-      el.addEventListener('mouseenter', () => clearTimeout(timer));
-      el.addEventListener('mouseleave', arm);
+      el.addEventListener('mouseover', () => clearTimeout(timer));
+      el.addEventListener('mouseout', arm);
       arm();
     }
     document.body.appendChild(el);

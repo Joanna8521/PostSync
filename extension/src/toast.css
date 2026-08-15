@@ -37,7 +37,11 @@
   border-radius: 8px;
 }
 
+/* 狀態通知不該吃掉點擊。它蓋在頁面右下角，而那裡常常正好是留言框與
+   表情符號選單——z-index 又是最大值，於是「收完之後不能回留言」。
+   整張卡片穿透，只有真正要按的東西（關閉、開啟 Doc）收點擊。 */
 .postsync-toast {
+  pointer-events: none;
   position: fixed !important;
   right: 20px;
   bottom: 20px;
@@ -54,6 +58,11 @@
   font-size: 13px;
   line-height: 1.65;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.postsync-toast a,
+.postsync-toast button {
+  pointer-events: auto;
 }
 
 .postsync-status-text {
