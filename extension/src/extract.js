@@ -41,10 +41,8 @@
   // 留言在臉書也是 role="article"，巢狀命中要濾掉，只留最外層那一層。
   // postTest 是第二道關卡：選擇器不得不放寬（臉書的貼文沒有專屬標記）時，
   // 用它把「長得像但不是貼文」的候選擋掉，否則整個動態牆會被當成一則。
-  function outermost(ad, root) {
-    let all = [...(root || document).querySelectorAll(ad.post)];
-    // 主錨點落空時才走種子法。平常不跑，省得在正常頁面上多做白工。
-    if (!all.length && ad.postAnchor) all = fromAnchor(ad, root);
+  function keep(ad, list) {
+    let all = list;
     if (ad.postTest) {
       all = all.filter((el) => {
         try {
@@ -55,6 +53,38 @@
       });
     }
     return all.filter((el) => !all.some((o) => o !== el && o.contains(el)));
+  }
+
+  // 兩條路都跑，然後合併。
+  //
+  // 種子法不能只在「一則都找不到」時才跑：臉書的動態牆上，貼文容器可能
+  // 一個語意屬性都沒有（內文容器往上到 role="main" 之間全是無意義的
+  // .html-div），而屬性選擇器仍然會在頁面**別處**命中幾個不是貼文的東西。
+  // 那時數量不是 0，種子法就永遠不啟動，使用者看到的是
+  // 「偵測到 4 則、卻一則都鎖定不了」。
+  //
+  // 也不能「取數量多的那一條」——頁面上帶文字的貼文可能只有三則，
+  // 而假命中有四個，種子法照樣輸。數量根本不是判準。
+  //
+  // 合併時唯一要處理的是重疊：屬性那條命中的東西如果**包著**種子法找到的
+  // 貼文，那它是外層容器而不是一則，丟掉。剩下的交給呼叫端按「在不在畫面上」
+  // 去挑——假命中通常根本不在視窗裡，自然就落選了。
+  function mergePosts(bySeed, byAttr) {
+    const out = [...bySeed];
+    for (const el of byAttr) {
+      if (out.includes(el)) continue;
+      if (bySeed.some((s) => el.contains(s))) continue;
+      out.push(el);
+    }
+    return out;
+  }
+
+  function outermost(ad, root) {
+    const byAttr = keep(ad, [...(root || document).querySelectorAll(ad.post)]);
+    if (!ad.postAnchor) return byAttr;
+    const bySeed = keep(ad, fromAnchor(ad, root));
+    outermost.lastCounts = { seed: bySeed.length, attr: byAttr.length };
+    return mergePosts(bySeed, byAttr);
   }
 
   // 從某個元素往上找「它屬於哪一則貼文」。要的是**最外層**那一個：

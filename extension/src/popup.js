@@ -228,6 +228,11 @@ $('diag').addEventListener('click', () => {
           lines.push(`  ${n > 0 ? '●' : '○'} ${name}：${n < 0 ? '不支援' : n}`);
         }
       }
+      // 偵測到了卻沒鎖定：問題在「挑出畫面上那一則」，不在辨識。
+      // 每一則的位置與否決理由直接列出來。
+      if (res.picks) {
+        lines.push('', `視窗 ${res.viewport}　偵測到的每一則：`, ...res.picks);
+      }
       // 候選全落空時，直接把畫面中央往上的 DOM 路徑報出來——
       // 那就是「該拿什麼當錨點」的答案，不用再猜一輪
       if (!ok && res.sample) {

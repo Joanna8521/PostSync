@@ -178,6 +178,54 @@
     </div>
   </div>
 
+  <!-- ── 回歸：動態牆外層是 aria-labelledby，裡面全是純圖片貼文
+       （沒有內文容器）。判定式若把「有永久連結」放得太寬，外層容器
+       也會命中，整個動態牆變成一則超大貼文。 -->
+  <div id="fbphotofeed">
+    <div aria-labelledby="pf">
+      <span id="pf">動態消息</span>
+      <div aria-posinset="1">
+        <h3><a role="link" href="/profile.php?id=1">甲君</a></h3>
+        <a href="/demo.user/posts/pfbid024GGG"><span>1 小時</span></a>
+        <img src="https://cdn.example/pic1.jpg" width="500" height="400">
+      </div>
+      <div aria-posinset="2">
+        <h3><a role="link" href="/profile.php?id=2">乙君</a></h3>
+        <a href="/demo.user/posts/pfbid024HHH"><span>2 小時</span></a>
+        <img src="https://cdn.example/pic2.jpg" width="500" height="400">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 臉書動態牆：貼文容器一個語意屬性都沒有（使用者實測的結構）──
+       內文容器往上到 role="main" 之間全是 .html-div。而頁面別處還有
+       幾個帶 aria-labelledby 的東西會被屬性選擇器命中——那些不是貼文，
+       所以會出現「偵測到 N 則、卻一則都鎖定不了」。 -->
+  <div id="fbnaked">
+    <div role="main">
+      <div aria-labelledby="side1" style="min-height:200px">
+        <span id="side1">側欄之類的東西</span>
+        <div data-ad-preview="message"><span>這是頁面別處的文字</span></div>
+      </div>
+      <div class="html-div">
+        <div class="html-div" style="min-height:600px">
+          <h3><a role="link" href="/profile.php?id=5">趙一心</a></h3>
+          <a href="/demo.user/posts/pfbid024JJJ"><span>3 小時</span></a>
+          <div class="html-div">
+            <div data-ad-preview="message"><span>沒有任何語意屬性的那種貼文。</span></div>
+          </div>
+        </div>
+        <div class="html-div" style="min-height:600px">
+          <h3><a role="link" href="/profile.php?id=6">錢二明</a></h3>
+          <a href="/demo.user/posts/pfbid024KKK"><span>6 小時</span></a>
+          <div class="html-div">
+            <div data-ad-preview="message"><span>第二則同樣沒有屬性。</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── IG：貼文容器沒有任何語意屬性（真實情況）──
        沒有 <article>、沒有 role、沒有 data-testid、沒有 aria-*，
        class 全是無意義的 .html-div。只能從永久連結往上爬。 -->

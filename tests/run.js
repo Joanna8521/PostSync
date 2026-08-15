@@ -178,6 +178,57 @@ pinSizes(document.getElementById('fixtures'));
   check('permalink 是這則的', d.permalink.includes('pfbid024EEE'), d.permalink);
 }
 
+// ── 回歸：全是純圖片貼文的動態牆 ────────────────────
+{
+  group('回歸：外層 aria-labelledby ＋ 底下全是純圖片貼文');
+  const ad = byId('facebook');
+  const scope = document.getElementById('fbphotofeed');
+  const posts = EX.outermost(ad, scope);
+
+  // 「有永久連結就算貼文」如果放得太寬，外層容器也會命中，
+  // 而 outermost 只留最外層——整個動態牆就變成一則超大貼文。
+  check('認出 2 則，不是 1 則超大的', posts.length === 2,
+    posts.map((p) => p.getAttribute('aria-posinset') || p.getAttribute('aria-labelledby')));
+  check('外層容器沒有被當成貼文',
+    !posts.some((p) => p.getAttribute('aria-labelledby') === 'pf'),
+    posts.map((p) => p.getAttribute('aria-labelledby')));
+}
+
+// ── 臉書動態牆：貼文完全沒有語意屬性 ────────────────
+{
+  group('臉書動態牆：貼文容器一個語意屬性都沒有');
+  const ad = byId('facebook');
+  const scope = document.getElementById('fbnaked');
+
+  // 使用者實測：屬性選擇器在頁面別處命中了幾個不是貼文的東西，
+  // 所以「一則都找不到才啟動種子法」永遠不會觸發，而畫面上
+  // 看到的是「偵測到 N 則、卻一則都鎖定不了」。
+  const byAttrOnly = [...scope.querySelectorAll(ad.post)];
+  check('屬性選擇器確實會命中不是貼文的東西',
+    byAttrOnly.some((el) => el.getAttribute('aria-labelledby') === 'side1'),
+    '這個 fixture 沒有重現到那個情況');
+
+  const posts = EX.outermost(ad, scope);
+  const real = [...scope.querySelectorAll('a[href*="pfbid024JJJ"], a[href*="pfbid024KKK"]')]
+    .map((a) => posts.find((p) => p.contains(a)));
+
+  // 這是壞掉的那件事：兩則沒有屬性的貼文完全認不出來。
+  check('兩則沒有屬性的貼文都在結果裡',
+    real.every(Boolean) && real[0] !== real[1],
+    `${real.filter(Boolean).length}/2`);
+
+  // 頁面別處那個「像貼文的東西」留在結果裡是可以的——它會在
+  // 「挑出畫面上那一則」那一步按位置被淘汰。真正不能發生的是
+  // 它把貼文**吃進去**，那樣使用者收到的會是一大坨。
+  check('沒有任何一項把別項包在裡面',
+    !posts.some((a) => posts.some((b) => a !== b && a.contains(b))),
+    posts.map((p) => p.getAttribute('aria-labelledby') || p.className));
+
+  const d = EX.extract(ad, posts[0]);
+  check('內文抓得到', d.text.includes('沒有任何語意屬性的那種貼文'), d.text);
+  check('permalink 是這則的', d.permalink.includes('pfbid024JJJ'), d.permalink);
+}
+
 // ── 右鍵定位 ────────────────────────────────────────
 {
   group('右鍵：點在哪裡都要收到「整篇」，不是留言');

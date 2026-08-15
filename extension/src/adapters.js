@@ -80,11 +80,24 @@ self.POST_SYNC = {
       // 十幾個 aria-posinset 節點，其中人物、粉專、社團那些不是貼文（正確地
       // 被擋掉），但**純圖片、沒有文字的貼文也沒有內文容器**，會一起被誤殺。
       // 那種貼文有永久連結，用它補上。
-      postTest: (el) => el.matches('[role="article"]')
-        || ((!!el.querySelector('[data-ad-preview="message"]') || !!el.querySelector(FB_PERMALINK))
-          && !el.querySelector(':scope div[aria-labelledby] [data-ad-preview="message"],'
-            + ' :scope div[aria-posinset] [data-ad-preview="message"],'
-            + ' :scope div[aria-posinset] [aria-posinset]')),
+      postTest: (el) => {
+        // 包著另一則的一定不是「一則」。:scope 不能省，少了它 el 自己
+        // 就會充當那個祖先，於是每一則都把自己否決掉。
+        const wrapsAnother = el.querySelector(
+          ':scope div[aria-labelledby] [data-ad-preview="message"],'
+          + ' :scope div[aria-posinset] [data-ad-preview="message"],'
+          + ' :scope div[aria-posinset] [aria-posinset],'
+          + ' :scope div[aria-posinset] a[href*="/posts/"]',
+        );
+        if (wrapsAnother) return false;
+        if (el.matches('[role="article"]')) return true;
+        if (el.querySelector('[data-ad-preview="message"]')) return true;
+        // 純圖片、沒有文字的貼文沒有內文容器，只能靠「有這則自己的永久連結」。
+        // 但這條只給 aria-posinset：那是「動態牆上的第 N 項」，本來就是
+        // 一則的單位。aria-labelledby 臉書連外層容器都在用，放行的話
+        // 整個動態牆會被當成一則超大貼文。
+        return el.hasAttribute('aria-posinset') && !!el.querySelector(FB_PERMALINK);
+      },
       // 三種屬性都落空時的後備：內文容器 data-ad-preview="message" 在目前
       // 看過的每一種版面上都在，以它為種子往上爬到帶永久連結的那一層。
       postAnchor: {

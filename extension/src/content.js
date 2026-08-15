@@ -20,9 +20,17 @@
   if (!ad || !EX) return; // 認不出的網域整個不啟動
 
   // 診斷用：頁面上看得到這個屬性，就代表 content script 真的有被注入
-  // 版號從 manifest 讀，不要寫死——寫死的遲早會跟真的對不上，
-  // 而且那種不一致不會有任何錯誤訊息。
-  document.documentElement.dataset.postSync = `${chrome.runtime.getManifest().version}/${ad.id}`;
+  // 版號從 manifest 讀，不要寫死——寫死的遲早會跟真的對不上，而且那種
+  // 不一致不會有任何錯誤訊息。
+  //
+  // 但這是**診斷用**的標記，不能有能力弄死功能本身：擴充剛更新過時，
+  // 舊分頁的 chrome.runtime 已經失效，這一行會丟例外而整支 content script
+  // 當場死掉——沒有按鈕、沒有 toast，連診斷都會說「這個分頁沒有 Post Sync」。
+  try {
+    document.documentElement.dataset.postSync = `${chrome.runtime.getManifest().version}/${ad.id}`;
+  } catch (_) {
+    document.documentElement.dataset.postSync = `?/${ad.id}`;
+  }
 
   let enabled = true;
   const WATCH = ['enabled'];
@@ -53,16 +61,25 @@
 
   let active = null;
 
+  // 為什麼這一則不合格。回傳空字串＝合格。
+  // 「偵測到 N 則但一則都沒鎖定」時，唯一有用的資訊就是這個——
+  // 只給總數的話完全看不出是太矮、在畫面外、還是別的。
+  function rejectReason(r) {
+    if (r.height < 80) return '太矮';           // 佔位或廣告殼
+    if (r.bottom < 60) return '在視窗上方';
+    if (r.top > window.innerHeight - 40) return '在視窗下方';
+    if (Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0) <= 0) return '不可見';
+    return '';
+  }
+
   function pickActive() {
     const mid = window.innerHeight / 2;
     let best = null;
     let bestArea = 0;
     for (const el of posts) {
       const r = el.getBoundingClientRect();
-      if (r.bottom < 60 || r.top > window.innerHeight - 40) continue;
-      if (r.height < 80) continue; // 太矮的多半是佔位或廣告殼
+      if (rejectReason(r)) continue;
       const visible = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
-      if (visible <= 0) continue;
       // 跨過中線的優先，其次才比可見面積
       const score = (r.top <= mid && r.bottom >= mid) ? visible + 100000 : visible;
       if (score > bestArea) {
@@ -71,6 +88,15 @@
       }
     }
     setActive(best);
+  }
+
+  function pickReport() {
+    return posts.slice(0, 12).map((el, i) => {
+      const r = el.getBoundingClientRect();
+      const why = rejectReason(r) || '✅ 合格';
+      return `  #${i} top=${Math.round(r.top)} h=${Math.round(r.height)}`
+        + ` ${describe(el)} → ${why}`;
+    });
   }
 
   function setActive(el) {
@@ -508,9 +534,11 @@
         // 三條路都沒中：把現場證據直接寫在畫面上，不要叫人去開 Console。
         // 往上的那條路徑就是「該拿什麼當錨點」的答案。
         refreshPosts();
+        const c = EX.outermost.lastCounts;
         toast(
           `❌ 認不出這是哪一則貼文\n`
-          + `・這一頁 ${ad.post} 只找到 ${posts.length} 個\n`
+          + `・偵測到 ${posts.length} 則`
+          + (c ? `（屬性 ${c.attr}／種子 ${c.seed}）` : '') + '\n'
           + `・你點的是 ${describe(lastRightClicked)}\n`
           + `・往上這條路上有：\n${ancestry(lastRightClicked).join('\n')}`,
           null, 120000,
@@ -564,6 +592,9 @@
           path: location.pathname,
           probe,
           media,
+          // 偵測到了卻一則都沒鎖定：把每一則的位置與被否決的理由列出來
+          picks: (posts.length && !active) ? pickReport() : null,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
           // 一則都認不出來時，唯一有用的是「這一頁實際長什麼樣」
           sample: posts.length ? null : domSample(),
         });
