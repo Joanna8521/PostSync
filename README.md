@@ -181,7 +181,12 @@ tests/
 
 ## 測試
 
-用瀏覽器直接打開這兩個檔，全綠才算過。改過 `src/` 之後記得在網址後面加
+```bash
+python3 tools/run_tests.py        # 抽取層，全綠才算過
+python3 tools/check_permissions.py # manifest 的權限涵蓋度
+```
+
+也可以用瀏覽器直接打開 `tests/*.html` 自己看。那樣要記得在網址後面加
 `?v=2` 之類的參數，不然瀏覽器會拿快取裡的舊檔，你會看到「改了沒反應」。
 
 **`tests/run.html`** —— 抽取層。釘住的是那種**壞了不會有任何畫面告訴你**的事：
@@ -195,6 +200,9 @@ tests/
 - permalink 帶著追蹤參數 → 同一篇每次指紋都不同 → 去重整個失效
 - 平台改版讓內文容器落空 → 安靜地收到一份空的
 - 作者名或時間戳變成檔名 → 整個資料夾看起來都一樣
+- **臉書送不同的 DOM 給不同人**（A/B 測試與分批推送）。已知在用的三種
+  貼文容器：`role="article"`、`div[aria-labelledby]`、`div[aria-posinset]`，
+  三種各有 fixture。「我這邊可以」在這個平台上不能推論到別人身上。
 
 **`tests/live.html`** —— 浮動按鈕。假的動態牆＋假的 `chrome` API，
 實際把 `content.js` 跑起來，左下角面板會報出：content script 有沒有注入、

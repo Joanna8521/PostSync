@@ -33,9 +33,9 @@
         <span>大部分人卡在成本加成，可是客戶買的從來不是成本。</span>
         <div role="button" tabindex="0">查看更多</div>
       </div>
-      <img src="https://scontent.xx.fbcdn.net/v/t39/photo_big.jpg?oh=abc"
+      <img src="https://cdn.example/photo_big.jpg"
            width="500" height="300" style="width:500px;height:300px">
-      <img src="https://scontent.xx.fbcdn.net/v/t39/avatar.jpg"
+      <img src="https://cdn.example/avatar.jpg"
            width="40" height="40" style="width:40px;height:40px">
       <a href="/permalink/998877/?__cft__[0]=ZZZ&amp;fbclid=xyz&amp;story=1">
         <span>3 小時</span>
@@ -45,7 +45,7 @@
       <div role="article">
         <h3><a role="link" href="/profile.php?id=999">路人甲</a></h3>
         <div dir="auto"><span>推爆這篇</span></div>
-        <img src="https://scontent.xx.fbcdn.net/v/t39/commenter.jpg"
+        <img src="https://cdn.example/commenter.jpg"
              width="300" height="300" style="width:300px;height:300px">
         <a href="/permalink/111/?comment_id=555"><span>1 小時</span></a>
       </div>
@@ -130,18 +130,38 @@
     </div>
   </div>
 
+  <!-- ── 臉書的另一種版面：貼文是 div[aria-posinset]，整條路上沒有
+       aria-labelledby。臉書對不同帳號送不同 DOM，所以三種都要認得。 -->
+  <div id="fbposinset">
+    <div class="html-div">
+      <div aria-posinset="1">
+        <h3><a role="link" href="/profile.php?id=77">周雅文</a></h3>
+        <a href="/demo.user/posts/pfbid024CCC"><span>14 小時</span></a>
+        <div data-ad-preview="message">
+          <span>把想法寫下來之前，先問自己這件事三個月後還重要嗎。</span>
+        </div>
+        <div role="toolbar"><span>讚</span><span>留言</span><span>分享</span></div>
+      </div>
+      <div aria-posinset="2">
+        <h3><a role="link" href="/profile.php?id=78">郭建宏</a></h3>
+        <a href="/demo.user/posts/pfbid024DDD"><span>1 天</span></a>
+        <div data-ad-preview="message"><span>第二則貼文的內容。</span></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── IG：貼文容器沒有任何語意屬性（真實情況）──
        沒有 <article>、沒有 role、沒有 data-testid、沒有 aria-*，
        class 全是無意義的 .html-div。只能從永久連結往上爬。 -->
   <div id="ig">
     <div class="html-div">
       <div class="html-div">
-        <div class="html-div">
-          <a href="/demo/"><img alt="示範帳號 的大頭貼照" src="https://x/av.jpg"
+        <div class="html-div" style="min-height:600px">
+          <a href="/demo/"><img alt="示範帳號 的大頭貼照" src="https://cdn.example/av.jpg"
              width="32" height="32" style="width:32px;height:32px"></a>
           <a href="/demo/">demo.user</a>
         </div>
-        <img alt="貼文照片" src="https://scontent.cdninstagram.com/v/t51/p1.jpg"
+        <img alt="貼文照片" src="https://cdn.example/p1.jpg"
              width="468" height="468" style="width:468px;height:468px">
         <a href="/p/DABC123/"><time datetime="2026-08-13T10:00:00">18 小時</time></a>
         <div class="html-div"><h1>早上煮了咖啡，光線剛好，就拍了幾張。</h1></div>
@@ -160,9 +180,9 @@
 
 </div>
 
-<script src="../extension/src/adapters.js?v=15"></script>
-<script src="../extension/src/naming.js?v=15"></script>
-<script src="../extension/src/extract.js?v=15"></script>
-<script src="run.js?v=15"></script>
+<script src="../extension/src/adapters.js?v=16"></script>
+<script src="../extension/src/naming.js?v=16"></script>
+<script src="../extension/src/extract.js?v=16"></script>
+<script src="run.js?v=16"></script>
 </body>
 </html>

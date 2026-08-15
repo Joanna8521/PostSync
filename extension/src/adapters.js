@@ -55,17 +55,30 @@ self.POST_SYNC = {
       // 臉書現在的動態牆貼文是 div[aria-labelledby]，**沒有** role="article"
       // （role="article" 只剩部分版面與留言在用），所以兩種都要收。
       // 留言巢在貼文裡，由 outermost() 濾掉。
-      post: '[role="article"], div[aria-labelledby]',
-      // aria-labelledby 臉書用得很浮濫，光靠它會把整個動態牆當成一則貼文。
+      // 臉書對不同帳號／版面／語系送不同的 DOM（A/B 測試與分批推送），
+      // 所以一個人身上成立的錨點，在另一個人那裡可能根本不存在。
+      // 已知在用的三種：role="article"、aria-labelledby、aria-posinset。
+      // 「我這邊可以」在這個平台上完全不能推論到別人身上。
+      post: '[role="article"], div[aria-labelledby], div[aria-posinset]',
+      // 這些屬性臉書用得很浮濫，光靠它們會把整個動態牆當成一則貼文。
       // 一則貼文的判準是「裡面有內文容器，而且沒有包著另一則」。
       //
       // 第二個條件的 `:scope` 不能省。querySelector 的選擇器是拿整份文件去比對、
       // 再篩出 scope 底下的結果，所以少了 :scope 的話，el 自己就會充當那個
-      // `div[aria-labelledby]` 祖先，於是每一則貼文都把自己否決掉——
-      // 症狀是整個動態牆一則都認不出來，只剩留言被當成貼文。
+      // 祖先，於是每一則貼文都把自己否決掉——症狀是整個動態牆一則都認不出來，
+      // 只剩留言被當成貼文。
       postTest: (el) => el.matches('[role="article"]')
         || (!!el.querySelector('[data-ad-preview="message"]')
-          && !el.querySelector(':scope div[aria-labelledby] [data-ad-preview="message"]')),
+          && !el.querySelector(':scope div[aria-labelledby] [data-ad-preview="message"],'
+            + ' :scope div[aria-posinset] [data-ad-preview="message"]')),
+      // 三種屬性都落空時的後備：內文容器 data-ad-preview="message" 在目前
+      // 看過的每一種版面上都在，以它為種子往上爬到帶永久連結的那一層。
+      postAnchor: {
+        seed: '[data-ad-preview="message"]',
+        needs: ['a[href*="/posts/"], a[href*="/permalink/"], a[href*="story_fbid="], a[href*="/share/"]'],
+        maxUp: 25,
+        minHeight: 120,
+      },
       // 內文容器認得出來的話，抓到的雜訊少非常多
       text: '[data-ad-preview="message"]',
       // aria-labelledby 指向的就是「這一則是誰發的」——這是它的語意本身，

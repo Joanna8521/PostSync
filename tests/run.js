@@ -37,6 +37,25 @@ function check(desc, ok, got) {
 const EX = self.POST_SYNC_EXTRACT;
 const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
 
+// 圖片尺寸不要依賴「瀏覽器怎麼渲染連不到的圖」——headless 與一般瀏覽器
+// 對這件事的處理不一樣，同一份測試會在不同環境給出不同結果，而那正是
+// 這支擴充一路在修的毛病。這裡把尺寸釘死，測的是判斷邏輯本身。
+// width/height 屬性 = 有版面的尺寸；沒有屬性的視為「還沒上版面」。
+function pinSizes(root) {
+  for (const img of root.querySelectorAll('img')) {
+    const w = +img.getAttribute('width') || 0;
+    const h = +img.getAttribute('height') || 0;
+    if (!Object.getOwnPropertyDescriptor(img, 'naturalWidth')) {
+      Object.defineProperty(img, 'naturalWidth', { value: w, configurable: true });
+      Object.defineProperty(img, 'naturalHeight', { value: h, configurable: true });
+    }
+    img.getBoundingClientRect = () => ({
+      width: w, height: h, top: 0, left: 0, right: w, bottom: h,
+    });
+  }
+}
+pinSizes(document.getElementById('fixtures'));
+
 // ── Facebook ────────────────────────────────────────
 {
   group('Facebook：一則貼文，裡面巢了兩則留言');
@@ -106,6 +125,29 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   const { topicOf } = self.POST_SYNC_NAME;
   check('檔名主題是內文，不是作者名',
     topicOf(d).includes('開會前先把'), topicOf(d));
+}
+
+// ── 臉書的另一種版面 ────────────────────────────────
+{
+  group('臉書另一種版面：貼文是 div[aria-posinset]，沒有 aria-labelledby');
+  const ad = byId('facebook');
+  const scope = document.getElementById('fbposinset');
+
+  // 真的踩到過：另一個帳號的臉書送的是這種 DOM，整條祖先鏈上
+  // 一個 aria-labelledby 都沒有，於是一則貼文都認不出來。
+  check('這種版面上真的沒有 aria-labelledby',
+    scope.querySelectorAll('[aria-labelledby]').length === 0, '竟然有');
+
+  const posts = EX.outermost(ad, scope);
+  check('還是認得出 2 則', posts.length === 2, `${posts.length} 則`);
+  check('外層 .html-div 沒有被當成一則超大貼文',
+    posts.every((p) => p.hasAttribute('aria-posinset')),
+    posts.map((p) => p.className || p.getAttribute('aria-posinset')));
+
+  const d = EX.extract(ad, posts[0]);
+  check('作者抓得到', d.author === '周雅文', d.author);
+  check('內文抓得到', d.text.includes('三個月後還重要嗎'), d.text);
+  check('permalink 是這則的', d.permalink.includes('pfbid024CCC'), d.permalink);
 }
 
 // ── 右鍵定位 ────────────────────────────────────────
@@ -304,11 +346,11 @@ const byId = (id) => self.POST_SYNC.ADAPTERS.find((a) => a.id === id);
   host.style.cssText = 'position:absolute;left:-99999px;top:0;width:600px';
   host.innerHTML = `
     <article>
-      <header><img alt="示範帳號 的大頭貼照" src="https://x/av1.jpg" style="width:150px;height:150px"></header>
-      <img alt="示範帳號 的大頭貼照" src="https://x/av2.jpg" style="width:150px;height:150px">
-      <img alt="貼文第一張" src="https://x/p1.jpg" style="width:400px;height:400px">
-      <img alt="輪播第二張" src="https://x/p2.jpg" style="display:none">
-      <img alt="愛心圖示" src="https://x/icon.jpg" style="width:24px;height:24px">
+      <header><img alt="示範帳號 的大頭貼照" src="https://cdn.example/av1.jpg" style="width:150px;height:150px"></header>
+      <img alt="示範帳號 的大頭貼照" src="https://cdn.example/av2.jpg" style="width:150px;height:150px">
+      <img alt="貼文第一張" src="https://cdn.example/p1.jpg" style="width:400px;height:400px">
+      <img alt="輪播第二張" src="https://cdn.example/p2.jpg" style="display:none">
+      <img alt="愛心圖示" src="https://cdn.example/icon.jpg" style="width:24px;height:24px">
     </article>`;
   document.body.appendChild(host);
 
