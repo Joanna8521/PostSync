@@ -150,6 +150,34 @@
     </div>
   </div>
 
+  <!-- ── 臉書搜尋結果頁／個人檔案頁：貼文掛在 role="feed" 底下的
+       aria-posinset，外層沒有 role="article"。使用者回報的真實結構。
+       搜尋頁的 aria-posinset 底下混著人物、粉專那些不是貼文的結果，
+       而且純圖片貼文沒有內文容器——兩種都要判對。 -->
+  <div id="fbsearch">
+    <div role="feed">
+      <div aria-posinset="1">
+        <h3><a role="link" href="/profile.php?id=91">吳佩君</a></h3>
+        <a href="/demo.user/posts/pfbid024EEE"><span>3 天</span></a>
+        <div data-ad-preview="message"><span>這是一則有文字的貼文內容。</span></div>
+      </div>
+      <div aria-posinset="2">
+        <h3><a role="link" href="/profile.php?id=92">郭建宏</a></h3>
+        <a href="/demo.user/posts/pfbid024FFF"><span>5 天</span></a>
+        <img src="https://cdn.example/only_photo.jpg" width="500" height="400">
+      </div>
+      <div aria-posinset="3">
+        <h3><a role="link" href="/someone/">某某某</a></h3>
+        <span>1.2 萬位追蹤者</span>
+        <div role="button">追蹤</div>
+      </div>
+      <div aria-posinset="4">
+        <h3><a role="link" href="/groups/12345/">某某社團</a></h3>
+        <span>公開社團・3.4 萬位成員</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ── IG：貼文容器沒有任何語意屬性（真實情況）──
        沒有 <article>、沒有 role、沒有 data-testid、沒有 aria-*，
        class 全是無意義的 .html-div。只能從永久連結往上爬。 -->

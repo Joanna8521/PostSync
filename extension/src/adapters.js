@@ -36,6 +36,12 @@ const ACTION_WORDS = new RegExp(`^(${[
   '所有心情', '最相關', '最新', '已編輯', '贊助', '已贊助', 'Sponsored', 'Edited',
 ].join('|')})$`, 'i');
 
+// 臉書貼文的永久連結長相。permalink 抽取與「這是不是一則貼文」的判定
+// 共用同一份，兩邊各寫一份遲早會分岔。
+const FB_PERMALINK = 'a[href*="/posts/"], a[href*="/permalink/"], a[href*="story_fbid="],'
+  + ' a[href*="/share/p/"], a[href*="/share/v/"], a[href*="/videos/"],'
+  + ' a[href*="/photo/"], a[href*="/photos/"], a[href*="/reel/"]';
+
 // 絕對不能按的按鈕。程式會去按「查看更多」把全文展開，而選單鈕、檢舉、
 // 追蹤這些東西的標籤常常也含有「更多」——IG 的「⋯」按鈕裡有一個
 // <title>更多選項</title>，SVG 的 title 會被算進 textContent，
@@ -67,10 +73,18 @@ self.POST_SYNC = {
       // 再篩出 scope 底下的結果，所以少了 :scope 的話，el 自己就會充當那個
       // 祖先，於是每一則貼文都把自己否決掉——症狀是整個動態牆一則都認不出來，
       // 只剩留言被當成貼文。
+      // 判定式：裡面要有「內文容器」或「這則貼文自己的永久連結」，
+      // 而且沒有包著另一則。
+      //
+      // 只認內文容器不夠：搜尋結果頁與個人檔案頁上，role="feed" 底下有
+      // 十幾個 aria-posinset 節點，其中人物、粉專、社團那些不是貼文（正確地
+      // 被擋掉），但**純圖片、沒有文字的貼文也沒有內文容器**，會一起被誤殺。
+      // 那種貼文有永久連結，用它補上。
       postTest: (el) => el.matches('[role="article"]')
-        || (!!el.querySelector('[data-ad-preview="message"]')
+        || ((!!el.querySelector('[data-ad-preview="message"]') || !!el.querySelector(FB_PERMALINK))
           && !el.querySelector(':scope div[aria-labelledby] [data-ad-preview="message"],'
-            + ' :scope div[aria-posinset] [data-ad-preview="message"]')),
+            + ' :scope div[aria-posinset] [data-ad-preview="message"],'
+            + ' :scope div[aria-posinset] [aria-posinset]')),
       // 三種屬性都落空時的後備：內文容器 data-ad-preview="message" 在目前
       // 看過的每一種版面上都在，以它為種子往上爬到帶永久連結的那一層。
       postAnchor: {
@@ -94,7 +108,7 @@ self.POST_SYNC = {
         return n ? (n.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80) : '';
       },
       author: 'h2 a[role="link"], h3 a[role="link"], h4 a[role="link"], h2 strong, h3 strong, span > h2 a, span > h3 a',
-      permalink: 'a[href*="/posts/"], a[href*="/permalink/"], a[href*="story_fbid="], a[href*="/share/p/"], a[href*="/share/v/"], a[href*="/videos/"], a[href*="/photo/"], a[href*="/photos/"], a[href*="/reel/"]',
+      permalink: FB_PERMALINK,
       time: 'a[href*="/posts/"] span, a[href*="permalink"] span, abbr',
       more: /^(查看更多|顯示更多|見更多|…\s*更多|全文|See more|Voir plus)$/i,
       exclude: '[role="toolbar"], form, [aria-label*="留言"], [aria-label*="Comment"], [data-visualcompletion="ignore"]',

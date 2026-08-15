@@ -150,6 +150,34 @@ pinSizes(document.getElementById('fixtures'));
   check('permalink 是這則的', d.permalink.includes('pfbid024CCC'), d.permalink);
 }
 
+// ── 臉書搜尋結果頁／個人檔案頁 ──────────────────────
+{
+  group('臉書搜尋頁／個人檔案頁：role="feed" 底下的 aria-posinset');
+  const ad = byId('facebook');
+  const scope = document.getElementById('fbsearch');
+
+  // 使用者回報的兩個案例（搜尋頁、個人檔案頁）是同一個病因。
+  // 搜尋頁上 aria-posinset 有十幾個，但其中只有幾個是貼文。
+  const posts = EX.outermost(ad, scope);
+  check('4 個 aria-posinset 裡只認出 2 則是貼文',
+    posts.length === 2, posts.map((p) => p.getAttribute('aria-posinset')));
+  check('人物結果沒有被當成貼文',
+    !posts.some((p) => p.getAttribute('aria-posinset') === '3'),
+    posts.map((p) => p.getAttribute('aria-posinset')));
+  check('社團結果沒有被當成貼文',
+    !posts.some((p) => p.getAttribute('aria-posinset') === '4'),
+    posts.map((p) => p.getAttribute('aria-posinset')));
+
+  // 純圖片貼文沒有 data-ad-preview，只認內文容器的話會被誤殺
+  check('純圖片、沒有文字的貼文也認得出來',
+    posts.some((p) => p.getAttribute('aria-posinset') === '2'),
+    posts.map((p) => p.getAttribute('aria-posinset')));
+
+  const d = EX.extract(ad, posts[0]);
+  check('內文抓得到', d.text.includes('有文字的貼文內容'), d.text);
+  check('permalink 是這則的', d.permalink.includes('pfbid024EEE'), d.permalink);
+}
+
 // ── 右鍵定位 ────────────────────────────────────────
 {
   group('右鍵：點在哪裡都要收到「整篇」，不是留言');

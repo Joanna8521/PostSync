@@ -42,6 +42,9 @@ async function load() {
   if (!profiles.some((p) => p.id === activeId)) activeId = profiles[0].id;
   renderProfiles();
 
+  const mf = chrome.runtime.getManifest();
+  $('ver').textContent = mf.version_name || `v${mf.version}`;
+
   checkConn();
   renderLog();
 }
@@ -209,6 +212,7 @@ $('diag').addEventListener('click', () => {
       }
       const ok = res.posts > 0;
       const lines = [
+        `版本：${res.build || '?'}`,
         `平台：${res.label}　頁面：${res.path}`,
         `錨點 ${res.selector}`,
         `→ 偵測到 ${res.posts} 則貼文${ok ? '' : '　⚠️ 這一頁的結構不一樣'}`,

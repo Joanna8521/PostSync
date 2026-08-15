@@ -547,7 +547,11 @@
           await sleep(250);
           media = mediaProbe(active);
         }
+        const mf = chrome.runtime.getManifest();
         sendResponse({
+          // 使用者回報問題時，第一個要知道的是「他跑的是哪一包」。
+          // 沒有這個欄位，今天就真的追了一個早就修好的 bug。
+          build: mf.version_name || mf.version,
           platform: ad.id,
           label: ad.label,
           selector: ad.post,
