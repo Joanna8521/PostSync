@@ -242,8 +242,16 @@ $('diag').addEventListener('click', () => {
       // 被當成頭像、還是根本找不到翻頁鈕
       const m = res.media;
       if (m) {
-        lines.push('', `圖片：DOM 裡 ${m.imgs.length} 張，收得到 ${m.taken} 張`);
-        lines.push(`翻頁鈕：${m.hasNext ? '找到了' : '❌ 找不到'}`);
+        // 「多圖只收到 N 張」有兩種完全不同的原因：DOM 裡本來就只有 N 個
+        // <img>（相簿型貼文最多鋪 5 張縮圖，其餘藏在「+7」後面、沒有節點），
+        // 或有節點但被濾掉。不分開報的話會往錯的方向修。
+        lines.push('', `圖片：DOM 裡 ${m.total} 個 <img>，過濾後收 ${m.taken} 張`);
+        if (m.moreOverlay) {
+          lines.push(`⚠️ 看到「${m.moreOverlay}」疊圖 —— 相簿型貼文，`
+            + '其餘的圖根本不在 DOM 裡，不是被濾掉');
+        }
+        lines.push(`/photo 連結：${m.photoLinks} 個`
+          + `　翻頁鈕：${m.hasNext ? '有' : '無'}`);
         if (m.imgs.length) lines.push(...m.imgs);
         if (!m.hasNext && m.btns.length) {
           lines.push('這一則裡的按鈕：', ...m.btns);

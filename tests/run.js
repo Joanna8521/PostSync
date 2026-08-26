@@ -229,6 +229,30 @@ pinSizes(document.getElementById('fixtures'));
   check('permalink 是這則的', d.permalink.includes('pfbid024JJJ'), d.permalink);
 }
 
+// ── 相簿型貼文：「只收到 5 張」的真正原因 ──────────
+{
+  group('臉書相簿型貼文：其餘的圖根本不在 DOM 裡');
+  const ad = byId('facebook');
+  const post = EX.outermost(ad, document.getElementById('fbalbum'))[0];
+  const rep = EX.imageReport(ad, post);
+
+  // 會員回報「多圖只收到 5 張」。cap 是 20，所以卡點不在上限。
+  check('DOM 裡就只有 6 個 img（5 張縮圖＋大頭貼）', rep.total === 6, rep.total);
+  check('五張縮圖全部收得到，沒有被尺寸濾掉', rep.taken === 5, rep.taken);
+  check('大頭貼沒有被算進去',
+    !EX.images(ad, post).some((u) => u.includes('album_av')), EX.images(ad, post));
+
+  // 這一行是關鍵：有「+7」就代表還有七張沒有節點，
+  // 加捲動觸發載入對這種情況完全沒用——要往別的方向修。
+  check('認得出「+7」疊圖（＝相簿型貼文的指紋）',
+    rep.moreOverlay === '+7', `moreOverlay=${rep.moreOverlay}`);
+  check('數得出 /photo 連結有幾個', rep.photoLinks === 5, rep.photoLinks);
+
+  // 每一張都要講得出「收」或「為什麼不收」
+  check('每張圖都有裁決理由',
+    rep.rows.length === 6 && rep.rows.every((r) => /→ /.test(r)), rep.rows);
+}
+
 // ── 右鍵定位 ────────────────────────────────────────
 {
   group('右鍵：點在哪裡都要收到「整篇」，不是留言');

@@ -152,11 +152,27 @@ function getToken(interactive) {
       + '把 client_id 填進 manifest.json；或先關掉 Drive、只用 Focus4ai 知識庫。'
     ));
   }
+  // getAuthToken 是 **Chrome 專屬**的：它靠 Chrome 內建的 Google 帳號整合，
+  // Arc、Brave、Edge、Vivaldi 這些 Chromium 瀏覽器多半沒有實作。
+  // 不講清楚的話，使用者只會看到「未知錯誤」而完全不知道是瀏覽器的問題。
+  if (typeof chrome.identity?.getAuthToken !== 'function') {
+    return Promise.reject(new Error(
+      'Drive 授權需要 Chrome 本身：這個瀏覽器（Arc／Brave／Edge…）沒有提供 '
+      + 'Google 帳號整合。收錄功能與 Focus4ai 知識庫同步不受影響，'
+      + '只有寫進 Drive 這一項要用 Chrome。'
+    ));
+  }
+
   const p = new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive }, (token) => {
       if (chrome.runtime.lastError || !token) {
+        const raw = (chrome.runtime.lastError && chrome.runtime.lastError.message) || '';
+        // 非 Chrome 的 Chromium 有時有這個函式、呼叫卻一定失敗，
+        // 訊息還很含糊。把可能的原因一起講出來。
         reject(new Error(
-          (chrome.runtime.lastError && chrome.runtime.lastError.message) || '尚未連接 Google'
+          `${raw || '尚未連接 Google'}`
+          + '（若你用的是 Arc／Brave／Edge，Drive 授權需要 Chrome 本身；'
+          + '收錄與知識庫同步不受影響）'
         ));
       } else {
         resolve(token);

@@ -607,18 +607,7 @@
   // 「圖片沒收完」猜不出來，因為可能死在四個地方：圖根本不在 DOM、
   // 尺寸被過濾掉、被當成頭像、或翻頁鈕根本找不到。把四件事一次量出來。
   function mediaProbe(root) {
-    const imgs = [...root.querySelectorAll('img')].slice(0, 16).map((i) => {
-      const r = i.getBoundingClientRect();
-      const alt = (i.getAttribute('alt') || '').replace(/\s+/g, ' ').slice(0, 16);
-      const flags = [];
-      if (i.closest('header')) flags.push('header');
-      if (!i.complete) flags.push('載入中');
-      return `  ${Math.round(r.width)}×${Math.round(r.height)}`
-        + ` nat ${i.naturalWidth}×${i.naturalHeight}`
-        + (flags.length ? ` [${flags.join(' ')}]` : '')
-        + (alt ? ` alt="${alt}"` : ' 無 alt');
-    });
-
+    const rep = EX.imageReport(ad, root);
     const btns = [...root.querySelectorAll('button, [role="button"]')].map((b) => {
       const r = b.getBoundingClientRect();
       const l = (b.getAttribute('aria-label') || b.textContent || '')
@@ -627,9 +616,12 @@
     }).filter(Boolean).slice(0, 16);
 
     return {
-      taken: EX.images(ad, root).length,
+      total: rep.total,
+      taken: rep.taken,
+      photoLinks: rep.photoLinks,
+      moreOverlay: rep.moreOverlay,
       hasNext: !!nextButton(root),
-      imgs,
+      imgs: rep.rows,
       btns,
     };
   }

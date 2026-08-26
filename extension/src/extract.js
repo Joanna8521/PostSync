@@ -259,29 +259,69 @@
   // IG 的大頭貼 natural 尺寸是 150x150，光看尺寸擋不掉。
   const AVATAR_ALT = /profile picture|大頭貼|大头像|个人资料照片|プロフィール写真|avatar/i;
 
+  // 一張圖收不收，理由是什麼。診斷與實際過濾走**同一個函式**——
+  // 各寫一份的話，診斷會告訴你「這張有收」而實際上沒有，
+  // 那種不一致比沒有診斷更糟。
+  function imageVerdict(ad, img, root) {
+    if (!ownedBy(ad, img, root)) return '留言區的圖';
+    if (AVATAR_ALT.test(img.getAttribute('alt') || '')) return '頭像（alt）';
+    if (img.closest('header')) return '頭像（在 header 裡）';
+
+    const r = img.getBoundingClientRect();
+    const laidOut = r.width > 0 && r.height > 0;
+    // 輪播裡還沒捲到的那幾張，版面寬高是 0，但 natural 尺寸是真的。
+    // 只看 rect 的話會把它們整批丟掉。反過來說，有版面而且很小的
+    // （40px 頭像、18px reaction icon）就是真的小，不能拿 natural 放行。
+    const w = laidOut ? r.width : (img.naturalWidth || 0);
+    const h = laidOut ? r.height : (img.naturalHeight || 0);
+    if (w < 120 || h < 120) return `太小（${Math.round(w)}×${Math.round(h)}）`;
+
+    const src = img.currentSrc || img.getAttribute('src') || '';
+    if (!/^https?:\/\//.test(src)) return '不是 http(s) 網址';
+    return '';  // 空字串＝要收
+  }
+
   function images(ad, root, cap = 20) {
     const out = [];
     for (const img of root.querySelectorAll('img')) {
-      if (!ownedBy(ad, img, root)) continue;      // 留言者的圖
-      if (AVATAR_ALT.test(img.getAttribute('alt') || '')) continue;
-      if (img.closest('header')) continue;        // IG 貼文頂端的作者列
-
-      const r = img.getBoundingClientRect();
-      const laidOut = r.width > 0 && r.height > 0;
-      // 輪播裡還沒捲到的那幾張，版面寬高是 0，但 natural 尺寸是真的。
-      // 只看 rect 的話會把它們整批丟掉，使用者就少收好幾張圖。
-      // 反過來說，有版面而且很小的（40px 頭像、18px reaction icon）
-      // 就是真的小，這時候不能拿 natural 尺寸來放行。
-      const w = laidOut ? r.width : (img.naturalWidth || 0);
-      const h = laidOut ? r.height : (img.naturalHeight || 0);
-      if (w < 120 || h < 120) continue;
-
+      if (imageVerdict(ad, img, root)) continue;
       const src = img.currentSrc || img.getAttribute('src') || '';
-      if (!/^https?:\/\//.test(src)) continue;
       if (!out.includes(src)) out.push(src);
       if (out.length >= cap) break;
     }
     return out;
+  }
+
+  // 「多圖貼文只收到 N 張」有兩種完全不同的原因，而使用者看到的症狀一樣：
+  //   一、DOM 裡本來就只有 N 個 <img>（臉書的相簿型貼文最多只鋪 5 張縮圖，
+  //       其餘藏在「+7」後面，根本沒有節點）
+  //   二、有節點但被我們濾掉了（太小、被當成頭像）
+  // 不分開報的話，會往錯的方向修——加捲動觸發載入對第一種完全沒用。
+  function imageReport(ad, root) {
+    const imgs = [...root.querySelectorAll('img')];
+    const rows = imgs.slice(0, 16).map((img) => {
+      const r = img.getBoundingClientRect();
+      const why = imageVerdict(ad, img, root) || '✅ 收';
+      const alt = (img.getAttribute('alt') || '').replace(/\s+/g, ' ').slice(0, 14);
+      return `  ${Math.round(r.width)}×${Math.round(r.height)}`
+        + ` nat ${img.naturalWidth}×${img.naturalHeight}`
+        + (img.complete ? '' : ' [載入中]')
+        + (alt ? ` alt="${alt}"` : '')
+        + ` → ${why}`;
+    });
+    // 相簿型貼文的線索：每張縮圖是一個 /photo 連結，而「+7」那種疊圖
+    // 代表後面還有幾張根本不在 DOM 裡
+    const photoLinks = root.querySelectorAll('a[href*="/photo"]').length;
+    const moreOverlay = [...root.querySelectorAll('span, div')]
+      .map((e) => (e.childElementCount === 0 ? (e.textContent || '').trim() : ''))
+      .find((t) => /^\+\s?\d+$/.test(t)) || '';
+    return {
+      total: imgs.length,
+      taken: images(ad, root).length,
+      photoLinks,
+      moreOverlay,
+      rows,
+    };
   }
 
   function extract(ad, root) {
@@ -326,6 +366,6 @@
 
   self.POST_SYNC_EXTRACT = {
     outermost, outermostOf, ownedBy, readable, clean, cleanAuthor,
-    postText, firstText, timeText, permalink, images, extract,
+    postText, firstText, timeText, permalink, images, imageReport, extract,
   };
 })();

@@ -226,6 +226,27 @@
     </div>
   </div>
 
+  <!-- ── 臉書相簿型貼文：十二張圖，但 DOM 裡只鋪 5 張縮圖，
+       其餘藏在「+7」疊圖後面——那七張根本沒有 <img> 節點。
+       這種「只收到 5 張」不是被濾掉，是本來就不在。 -->
+  <div id="fbalbum">
+    <div aria-posinset="1">
+      <h3><a role="link" href="/profile.php?id=9">孫七海</a></h3>
+      <a href="/demo.user/posts/pfbid024LLL"><span>4 小時</span></a>
+      <img alt="孫七海 的大頭貼照" src="https://cdn.example/album_av.jpg"
+           width="40" height="40">
+      <div data-ad-preview="message"><span>這次旅行拍了很多張。</span></div>
+      <a href="/photo/?fbid=1"><img src="https://cdn.example/al1.jpg" width="320" height="320"></a>
+      <a href="/photo/?fbid=2"><img src="https://cdn.example/al2.jpg" width="320" height="320"></a>
+      <a href="/photo/?fbid=3"><img src="https://cdn.example/al3.jpg" width="160" height="160"></a>
+      <a href="/photo/?fbid=4"><img src="https://cdn.example/al4.jpg" width="160" height="160"></a>
+      <a href="/photo/?fbid=5">
+        <img src="https://cdn.example/al5.jpg" width="160" height="160">
+        <span>+7</span>
+      </a>
+    </div>
+  </div>
+
   <!-- ── IG：貼文容器沒有任何語意屬性（真實情況）──
        沒有 <article>、沒有 role、沒有 data-testid、沒有 aria-*，
        class 全是無意義的 .html-div。只能從永久連結往上爬。 -->
