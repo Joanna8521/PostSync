@@ -33,13 +33,16 @@
   }
 
   let enabled = true;
-  const WATCH = ['enabled'];
+  let albumEnabled = true;   // 相簿逐張翻。這是唯一會打開彈出視窗的功能。
+  const WATCH = ['enabled', 'albumEnabled'];
   chrome.storage.sync.get(WATCH, (r) => {
     enabled = r.enabled !== false;
+    albumEnabled = r.albumEnabled !== false;
     if (!enabled) hideBtn();
   });
   chrome.storage.onChanged.addListener((ch, area) => {
     if (area !== 'sync') return;
+    if (ch.albumEnabled) albumEnabled = ch.albumEnabled.newValue !== false;
     if (ch.enabled) {
       enabled = ch.enabled.newValue !== false;
       if (!enabled) hideBtn();
@@ -354,6 +357,133 @@
     return [...seen];
   }
 
+  // ── 相簿：逐張翻 ──────────────────────────────────
+  //
+  // 臉書的相簿型貼文最多只鋪 5 張縮圖，其餘藏在「+7」疊圖後面，
+  // 根本沒有 <img> 節點。要拿到全部，只能打開相片檢視器逐張翻。
+  //
+  // 這是整支擴充**唯一會主動打開彈出視窗**的地方，而那正是先前為了避免
+  // 誤觸檢舉選單而全面禁止的事。所以每一步都收得很緊：
+  //   ・只在偵測到「+N」疊圖時啟動——一般貼文完全不走這條
+  //   ・只點貼文裡的相片連結，不點檢視器裡的任何按鈕
+  //   ・翻頁優先用鍵盤右方向鍵。檢視器右上角就是「⋯」選單，
+  //     少點一個按鈕就少一次誤觸的機會
+  //   ・真的要點「下一張」時，比對一律錨定，而且照樣過 MENU_DENY
+  //   ・有次數與時間上限；結束一定關閉檢視器並還原網址與捲動位置
+  //   ・使用者可以在設定裡整個關掉
+
+  const ALBUM_MAX = 30;          // 翻頁次數上限
+  const ALBUM_BUDGET_MS = 45000; // 總時間上限，卡住也一定會收手
+  const NEXT_PHOTO = /^(下一張|下一張相片|下一個|Next|Next photo|Next Photo)$/i;
+
+  // 相簿的判斷與入口都在 extract.js（那裡測得到），這裡只負責互動
+  const { isAlbum, albumOpener } = EX;
+
+  function viewerEl() {
+    return document.querySelector('[role="dialog"]');
+  }
+
+  // 檢視器裡的主圖很大，底下的縮圖列很小——用尺寸就分得開
+  function viewerImages(scope) {
+    const out = [];
+    for (const img of scope.querySelectorAll('img')) {
+      const r = img.getBoundingClientRect();
+      const w = Math.max(r.width, img.naturalWidth || 0);
+      const h = Math.max(r.height, img.naturalHeight || 0);
+      if (w < 300 || h < 300) continue;
+      const src = img.currentSrc || img.getAttribute('src') || '';
+      if (/^https?:\/\//.test(src) && !out.includes(src)) out.push(src);
+    }
+    return out;
+  }
+
+  // 鍵盤翻不動時才用。錨定比對＋MENU_DENY，兩道都要過。
+  function nextPhotoButton(scope) {
+    for (const b of scope.querySelectorAll('button, [role="button"]')) {
+      const aria = (b.getAttribute('aria-label') || '').trim();
+      const txt = (b.textContent || '').trim();
+      if (!NEXT_PHOTO.test(aria) && !NEXT_PHOTO.test(txt)) continue;
+      if (NS.MENU_DENY.test(labelOf(b))) continue;
+      const r = b.getBoundingClientRect();
+      if (r.width > 4 && r.height > 4) return b;
+    }
+    return null;
+  }
+
+  function pressRight() {
+    for (const t of [document.activeElement || document.body, document.body]) {
+      t.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, which: 39,
+        bubbles: true, cancelable: true,
+      }));
+    }
+  }
+
+  // 不管中途發生什麼事，離開時一定要把使用者的畫面還原
+  async function closeViewer(startUrl, startY) {
+    for (let i = 0; i < 5; i++) {
+      if (!viewerEl() && location.href === startUrl) break;
+      await dismissDialog();
+      if (location.href !== startUrl) {
+        history.back();
+        await sleep(450);
+      }
+      await sleep(200);
+    }
+    window.scrollTo({ top: startY });
+  }
+
+  async function collectAlbum(root, onCount) {
+    const opener = albumOpener(root);
+    if (!opener) return [];
+
+    const startUrl = location.href;
+    const startY = window.scrollY;
+    const found = new Set();
+    const t0 = Date.now();
+
+    try {
+      opener.click();
+      // 檢視器可能是對話框，也可能整頁換到相片頁——兩種都算開起來了
+      let opened = false;
+      for (let i = 0; i < 20 && !opened; i++) {
+        await sleep(150);
+        opened = !!viewerEl() || location.href !== startUrl;
+      }
+      if (!opened) return [];
+
+      let dry = 0;
+      for (let i = 0; i < ALBUM_MAX && dry < 2; i++) {
+        if (Date.now() - t0 > ALBUM_BUDGET_MS) break;
+        const scope = viewerEl() || document;
+        await waitImages(scope, 1800);
+
+        const before = found.size;
+        viewerImages(scope).forEach((u) => found.add(u));
+        if (onCount) onCount(found.size);
+
+        if (found.size === before) dry++;
+        else dry = 0;
+
+        pressRight();
+        await sleep(500);
+        // 鍵盤沒作用（這一輪完全沒新圖）就退而求其次按按鈕
+        if (found.size === before) {
+          const b = nextPhotoButton(viewerEl() || document);
+          if (b) {
+            b.click();
+            await sleep(500);
+          }
+        }
+      }
+    } catch (_) {
+      // 任何一步出錯都不能讓整次收錄失敗——已經拿到的圖照樣算數
+    } finally {
+      await closeViewer(startUrl, startY);
+    }
+    return [...found];
+  }
+
   // ── 收錄 ──────────────────────────────────────────
 
   let busy = false;
@@ -369,14 +499,28 @@
     try {
       toast('⏳ 展開全文…', null, 0, true);
       await expandAll(root);
+
+      // 內文一定要先抽完再碰相簿：打開相片檢視器可能讓整頁換掉，
+      // 那時 root 就失效了，再抽會抽到空的。
       const data = EX.extract(ad, root);
+      if (!data.text || data.text.length < 5) {
+        toast('❌ 抓不到這一則的內文（平台可能改版了）', null, 8000);
+        return;
+      }
+
       if (ad.next) {
         toast('⏳ 翻過輪播收圖…', null, 0, true);
         data.images = await collectCarousel(root);
       }
-      if (!data.text || data.text.length < 5) {
-        toast('❌ 抓不到這一則的內文（平台可能改版了）', null, 8000);
-        return;
+
+      // 相簿型貼文：縮圖只鋪 5 張，其餘要打開檢視器才拿得到
+      if (albumEnabled && isAlbum(root)) {
+        toast('⏳ 這是相簿貼文，翻頁收圖中…', null, 0, true);
+        const more = await collectAlbum(root, (n) => {
+          toast(`⏳ 翻相簿收圖…已收 ${n} 張`, null, 0, true);
+        });
+        // 檢視器裡的大圖畫質比縮圖好，排前面
+        data.images = [...new Set([...more, ...data.images])].slice(0, 30);
       }
       await send(data, force);
     } catch (e) {

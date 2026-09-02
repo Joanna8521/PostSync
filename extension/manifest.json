@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Post Sync — 社群貼文收藏器",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "滑到想收的社群貼文，按一下就存進你自己的 Google Drive，並可同步進 Focus4ai 知識庫。支援 Facebook / Threads / X / Instagram / LinkedIn。",
   "permissions": [
     "storage",

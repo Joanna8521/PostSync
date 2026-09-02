@@ -300,7 +300,7 @@ async function handleCapture(p, force, tabId) {
   if (wantF4) {
     try {
       progress(tabId, '同步到知識庫…');
-      f4 = await syncToFocus4ai(p, key);
+      f4 = await syncToFocus4ai(p, key, drive);
     } catch (e) {
       f4Error = errMsg(e);
     }
@@ -633,7 +633,7 @@ async function testFocus4ai(rawBase) {
   return { ok: true, total: j.total };
 }
 
-async function syncToFocus4ai(p, key) {
+async function syncToFocus4ai(p, key, drive) {
   const s = await chrome.storage.sync.get(['f4Base', 'f4Folder', 'f4Private']);
   const base = String(s.f4Base).replace(/\/+$/, '');
   await ensureOrigin(base); // 沒權限就先講清楚，不要讓瀏覽器丟一句 Failed to fetch
@@ -669,7 +669,15 @@ async function syncToFocus4ai(p, key) {
     `- 作者：${p.author || '未署名'}・${p.platformLabel}${p.timeText ? `・${p.timeText}` : ''}`,
     `- 原文：${p.permalink || '（抓不到連結）'}`,
     `- 收錄：${stamp}`,
-    ...(p.images && p.images.length ? [`- 圖片：${p.images.length} 張（嵌在 Drive 的 Doc 裡）`] : []),
+    // 知識庫存的是文字，圖片在 Drive 的那份文件裡。
+    // 只寫「12 張」的話，人從知識庫翻到這篇時看得到數字卻找不到圖。
+    // 不寫圖片網址是刻意的：臉書的圖床網址帶時效，寫進去幾天後
+    // 會全部變成破圖，那比只有數字更糟。
+    ...(p.images && p.images.length
+      ? [drive && drive.docUrl
+        ? `- 圖片：${p.images.length} 張 → [在 Drive 文件裡看](${drive.docUrl})`
+        : `- 圖片：${p.images.length} 張（沒有寫進 Drive，所以這裡沒有圖）`]
+      : []),
     '',
     cleanText(p.text),
     '',

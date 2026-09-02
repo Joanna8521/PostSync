@@ -248,6 +248,23 @@ pinSizes(document.getElementById('fixtures'));
     rep.moreOverlay === '+7', `moreOverlay=${rep.moreOverlay}`);
   check('數得出 /photo 連結有幾個', rep.photoLinks === 5, rep.photoLinks);
 
+  // 相簿的判斷與入口：content.js 會拿它決定要不要打開相片檢視器。
+  // 判斷錯的話，一般貼文也會被打開彈出視窗——那是最不能發生的事。
+  check('認得出這是相簿型貼文', EX.isAlbum(post) === true, EX.isAlbum(post));
+  const opener = EX.albumOpener(post);
+  check('入口是「+7」那一張的連結，不是第一張',
+    !!opener && opener.getAttribute('href').includes('fbid=5'),
+    opener && opener.getAttribute('href'));
+
+  // 一般貼文絕對不能被當成相簿
+  const plain = EX.outermost(ad, document.getElementById('fb'))[0];
+  check('一般貼文不會被當成相簿（不會打開檢視器）',
+    EX.isAlbum(plain) === false, EX.isAlbum(plain));
+  const photoOnly = EX.outermost(ad, document.getElementById('fbsearch'))
+    .find((p) => p.getAttribute('aria-posinset') === '2');
+  check('純圖片貼文（沒有「+N」）也不會被當成相簿',
+    EX.isAlbum(photoOnly) === false, EX.isAlbum(photoOnly));
+
   // 每一張都要講得出「收」或「為什麼不收」
   check('每張圖都有裁決理由',
     rep.rows.length === 6 && rep.rows.every((r) => /→ /.test(r)), rep.rows);

@@ -9,7 +9,7 @@ const DEF = self.POST_SYNC_DEFAULTS;
 
 const SYNC_KEYS = [
   'enabled', 'profiles', 'activeProfileId', 'driveEnabled',
-  'f4Enabled', 'f4Base', 'f4Folder', 'f4Private',
+  'f4Enabled', 'f4Base', 'f4Folder', 'f4Private', 'albumEnabled',
 ];
 
 let profiles = [];
@@ -28,6 +28,7 @@ async function load() {
 
   $('enabled').checked = s.enabled !== false;
   $('driveEnabled').checked = s.driveEnabled !== false;
+  $('albumEnabled').checked = s.albumEnabled !== false;
   $('f4Enabled').checked = !!s.f4Enabled;
   // 空欄位＋placeholder 等於叫人自己打一次。預設值直接填進去，
   // 要改的人反正會改，不用改的人少一個步驟。
@@ -170,6 +171,7 @@ $('save').addEventListener('click', () => {
     await chrome.storage.sync.set({
       enabled: $('enabled').checked,
       driveEnabled: $('driveEnabled').checked,
+      albumEnabled: $('albumEnabled').checked,
       profiles,
       activeProfileId: activeId,
       f4Enabled,

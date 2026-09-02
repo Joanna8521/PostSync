@@ -297,6 +297,27 @@
   //       其餘藏在「+7」後面，根本沒有節點）
   //   二、有節點但被我們濾掉了（太小、被當成頭像）
   // 不分開報的話，會往錯的方向修——加捲動觸發載入對第一種完全沒用。
+  // 相簿型貼文的指紋：「+7」那種疊圖。看到它就代表還有幾張圖
+  // 根本不在 DOM 裡——不是被我們濾掉的。
+  // 這個判斷 content.js 也要用（決定要不要打開檢視器），
+  // 所以放在這裡一份就好，兩邊各寫一份遲早會分岔。
+  function albumOverlay(root) {
+    return [...root.querySelectorAll('span, div')]
+      .find((e) => e.childElementCount === 0
+        && /^\+\s?\d+$/.test((e.textContent || '').trim())) || null;
+  }
+
+  function isAlbum(root) {
+    return !!albumOverlay(root) && !!root.querySelector('a[href*="/photo"]');
+  }
+
+  // 點「+7」那一張最省事：它直接開到相簿，不用先翻過前面幾張
+  function albumOpener(root) {
+    const ov = albumOverlay(root);
+    return (ov && ov.closest('a[href*="/photo"]'))
+      || root.querySelector('a[href*="/photo"]');
+  }
+
   function imageReport(ad, root) {
     const imgs = [...root.querySelectorAll('img')];
     const rows = imgs.slice(0, 16).map((img) => {
@@ -312,9 +333,8 @@
     // 相簿型貼文的線索：每張縮圖是一個 /photo 連結，而「+7」那種疊圖
     // 代表後面還有幾張根本不在 DOM 裡
     const photoLinks = root.querySelectorAll('a[href*="/photo"]').length;
-    const moreOverlay = [...root.querySelectorAll('span, div')]
-      .map((e) => (e.childElementCount === 0 ? (e.textContent || '').trim() : ''))
-      .find((t) => /^\+\s?\d+$/.test(t)) || '';
+    const ov = albumOverlay(root);
+    const moreOverlay = ov ? (ov.textContent || '').trim() : '';
     return {
       total: imgs.length,
       taken: images(ad, root).length,
@@ -366,6 +386,7 @@
 
   self.POST_SYNC_EXTRACT = {
     outermost, outermostOf, ownedBy, readable, clean, cleanAuthor,
-    postText, firstText, timeText, permalink, images, imageReport, extract,
+    postText, firstText, timeText, permalink, images, imageReport,
+    albumOverlay, isAlbum, albumOpener, extract,
   };
 })();
