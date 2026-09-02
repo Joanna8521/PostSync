@@ -83,6 +83,7 @@ BACKGROUND = [
 # 在 popup 按儲存的當下才跟使用者要
 OPTIONAL = [
     ("Focus4ai 線上站台", "https://app.focus4ai.com/api/doc"),
+    ("Focus4ai 附件上傳", "https://app.focus4ai.com/api/doc/asset"),
     ("Focus4ai 本機自架", "http://localhost:8000/api/doc"),
 ]
 

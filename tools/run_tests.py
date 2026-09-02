@@ -24,6 +24,32 @@ CANDIDATES = [
     "google-chrome", "chromium", "chromium-browser",
 ]
 
+# ── 原始碼掃描：不可見字元 ────────────────────────────
+# 為什麼要有這一支：controlled character 直接寫成位元組（而不是 \x00 這種
+# 跳脫形式）在 JS 裡照樣能跑，所以測試會全綠。但那會讓整個檔被當成 binary，
+# 於是 `grep` 對它**完全靜音**——不是報錯，是回傳空的。
+#
+# 這件事真的發生過：查一個功能在不在檔案裡，grep 回空的，就以為程式碼被
+# 刪了，回頭重做了一遍。看不見的東西不會有人發現，只能用掃描釘死。
+
+INVISIBLE = re.compile(
+    "[\x00-\x08\x0b-\x1f\x7f"          # 控制字元
+    "\u00ad\u034f\u200b-\u200f"         # 軟連字號、組合用字元、方向控制
+    "\u2060-\u2064\u206a-\u206f\ufeff]"  # 連接符、格式字元、BOM
+)
+
+def scan_sources() -> int:
+    bad = 0
+    for f in sorted((ROOT / "extension").rglob("*.js")) + sorted((ROOT / "tests").rglob("*.js")):
+        text = f.read_text(encoding="utf-8")
+        for n, line in enumerate(text.split("\n"), 1):
+            for m in INVISIBLE.finditer(line):
+                bad += 1
+                print(f"  ❌ {f.relative_to(ROOT)}:{n} 有字面上的不可見字元 "
+                      f"U+{ord(m.group()):04X}（要寫成跳脫形式，例如 \\x00）")
+    print("  ✅ 原始碼沒有字面上的不可見字元" if not bad else f"  {bad} 處")
+    return bad
+
 def chrome() -> str:
     for c in CANDIDATES:
         if Path(c).exists() or shutil.which(c):
@@ -33,6 +59,10 @@ def chrome() -> str:
     )
 
 def main() -> None:
+    print("=== 原始碼掃描 ===")
+    if scan_sources():
+        sys.exit(1)
+
     if not PAGE.exists():
         raise SystemExit(f"❌ 找不到 {PAGE}")
 

@@ -103,6 +103,34 @@ chrome.commands.onCommand.addListener((cmd) => {
   });
 });
 
+// ── 圖片位元組 ───────────────────────────────────────
+// 一次收錄裡同一張圖只下載一次。Drive 的第二層路徑與知識庫的附件都要用到
+// 位元組，各抓一次等於白抓一遍，而且圖床有速率限制。
+function blobCache() {
+  const cache = new Map();
+  return function getBlob(url) {
+    if (!cache.has(url)) {
+      cache.set(url, (async () => {
+        const res = await fetchT(url, {}, 30000);
+        if (!res.ok) throw new Error(`下載失敗 ${res.status}`);
+        return res.blob();
+      })());
+    }
+    return cache.get(url);
+  };
+}
+
+// service worker 裡沒有 FileReader，自己把位元組轉成 base64。
+// 一次 8000 個 byte：String.fromCharCode 一口氣吃太多會爆呼叫堆疊。
+async function toBase64(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
 // ── 逾時與錯誤 ───────────────────────────────────────
 // 每一個等待都要有盡頭。沒有逾時的等待，使用者看到的是永遠轉圈，
 // 而轉圈不帶任何資訊，他只能猜「是慢還是壞了」。
@@ -283,13 +311,15 @@ async function handleCapture(p, force, tabId) {
     return { ok: false, error: m };
   }
 
-  // 兩個目的地各自獨立：一邊掛了不能把另一邊也拖下水
+  // 兩個目的地各自獨立：一邊掛了不能把另一邊也拖下水。
+  // 但圖片的位元組兩邊都要用，共用一份快取，同一張只下載一次。
+  const getBlob = blobCache();
   let drive = null;
   let driveError = '';
   if (wantDrive) {
     try {
       progress(tabId, '確認 Google 授權…');
-      drive = await withAuthRetry((token) => writeDrive(token, p, tabId));
+      drive = await withAuthRetry((token) => writeDrive(token, p, tabId, getBlob));
     } catch (e) {
       driveError = errMsg(e);
     }
@@ -300,7 +330,7 @@ async function handleCapture(p, force, tabId) {
   if (wantF4) {
     try {
       progress(tabId, '同步到知識庫…');
-      f4 = await syncToFocus4ai(p, key, drive);
+      f4 = await syncToFocus4ai(p, key, drive, getBlob, tabId);
     } catch (e) {
       f4Error = errMsg(e);
     }
@@ -347,7 +377,7 @@ async function handleCapture(p, force, tabId) {
 // 收進來的每一則都是獨立挑過的東西，混在同一份文件裡等於全部糊掉。
 // 檔名用「日期_主題_平台」，在 Drive 的清單上一眼看得出是哪一篇。
 
-async function writeDrive(token, p, tabId) {
+async function writeDrive(token, p, tabId, getBlob) {
   const profile = await activeProfile();
   progress(tabId, '確認 Drive 資料夾…');
   const folderId = await ensureFolder(token, profile);
@@ -357,7 +387,7 @@ async function writeDrive(token, p, tabId) {
   let imgNote = '';
   if (p.images && p.images.length) {
     progress(tabId, `嵌入 ${p.images.length} 張圖…`);
-    imgNote = await insertImages(token, doc.docId, folderId, p.images, tabId);
+    imgNote = await insertImages(token, doc.docId, folderId, p.images, tabId, getBlob);
   }
   return {
     docName: doc.name,
@@ -492,10 +522,9 @@ async function insertOneImage(token, docId, uri) {
   });
 }
 
-async function viaDrive(token, docId, folderId, url) {
-  const res = await fetchT(url, {}, 30000);
-  if (!res.ok) throw new Error(`下載失敗 ${res.status}`);
-  const blob = await res.blob();
+async function viaDrive(token, docId, folderId, url, getBlob) {
+  // 位元組走共用快取：知識庫那條可能已經抓過同一張了
+  const blob = getBlob ? await getBlob(url) : await (await fetchT(url, {}, 30000)).blob();
   // Docs API 對嵌入圖片的上限是 50MB / 2500 萬像素，超過就別浪費一次來回
   if (blob.size > 45 * 1024 * 1024) throw new Error('圖片過大');
 
@@ -533,7 +562,7 @@ async function viaDrive(token, docId, folderId, url) {
   }
 }
 
-async function insertImages(token, docId, folderId, urls, tabId) {
+async function insertImages(token, docId, folderId, urls, tabId, getBlob) {
   const failed = [];
   let done = 0;
   for (const url of urls) {
@@ -544,7 +573,7 @@ async function insertImages(token, docId, folderId, urls, tabId) {
       continue;
     } catch (_) { /* 第一層被擋，換第二層 */ }
     try {
-      await viaDrive(token, docId, folderId, url);
+      await viaDrive(token, docId, folderId, url, getBlob);
       done++;
     } catch (e) {
       failed.push(url);
@@ -633,7 +662,45 @@ async function testFocus4ai(rawBase) {
   return { ok: true, total: j.total };
 }
 
-async function syncToFocus4ai(p, key, drive) {
+// 把圖片存進知識庫自己的副本。
+//
+// 不在 Markdown 裡寫圖床網址是刻意的：臉書與 IG 的網址帶時效簽章，
+// 幾天後會全部變 404，而且壞掉時不會有任何提示——那比只寫「12 張」更糟。
+// 知識庫端存的是自己的副本（同內容不存兩份，型別看檔頭），我們只要把
+// 位元組送過去，它回一段可以直接貼進內文的 markdown。
+//
+// 一張失敗不能拖垮整篇：收得到幾張算幾張，回報時說清楚。
+async function uploadAssets(base, notePath, urls, getBlob, tabId) {
+  const md = [];
+  const failed = [];
+  for (let i = 0; i < urls.length; i++) {
+    progress(tabId, `知識庫存圖 ${i + 1}/${urls.length}…`);
+    try {
+      const blob = await getBlob(urls[i]);
+      if (blob.size > 8 * 1024 * 1024) throw new Error('超過 8 MB');
+      const res = await fetchT(`${base}/api/doc/asset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ path: notePath, b64: await toBase64(blob) }),
+      }, 60000);
+      if (!res.ok) {
+        let detail = '';
+        try { detail = (await res.json()).detail || ''; } catch (_) { /* 非 JSON */ }
+        throw new Error(detail || `HTTP ${res.status}`);
+      }
+      if (!isJson(res)) throw new Error('回應不是 JSON（可能被導到登入頁）');
+      const j = await res.json();
+      if (j && j.markdown) md.push(j.markdown);
+      else throw new Error('回應沒有 markdown 欄位');
+    } catch (e) {
+      failed.push(errMsg(e));
+    }
+  }
+  return { md, failed };
+}
+
+async function syncToFocus4ai(p, key, drive, getBlob, tabId) {
   const s = await chrome.storage.sync.get(['f4Base', 'f4Folder', 'f4Private']);
   const base = String(s.f4Base).replace(/\/+$/, '');
   await ensureOrigin(base); // 沒權限就先講清楚，不要讓瀏覽器丟一句 Failed to fetch
@@ -649,6 +716,27 @@ async function syncToFocus4ai(p, key, drive) {
   const url = `${base}/api/doc?path=${encodeURIComponent(path)}`;
 
   const stamp = dateTimeStr();
+
+  // 先把圖存進知識庫（它的 save 會自己建 _assets/，所以筆記還不存在也沒關係），
+  // 這樣內文可以一次寫好，不用寫兩遍再重建一次索引。
+  let assetMd = [];
+  let imgLine = '';
+  if (p.images && p.images.length && getBlob) {
+    const r = await uploadAssets(base, path, p.images, getBlob, tabId);
+    assetMd = r.md;
+    if (r.failed.length) {
+      imgLine = `- 圖片：${assetMd.length}/${p.images.length} 張存進知識庫`
+        + `（${r.failed.length} 張失敗：${r.failed[0]}）`;
+    } else if (assetMd.length) {
+      imgLine = `- 圖片：${assetMd.length} 張`;
+    }
+  }
+  // 一張都沒存成、或知識庫還不支援附件時，至少讓人從這裡找得到圖
+  if (!assetMd.length && p.images && p.images.length) {
+    imgLine = drive && drive.docUrl
+      ? `- 圖片：${p.images.length} 張 → [在 Drive 文件裡看](${drive.docUrl})`
+      : `- 圖片：${p.images.length} 張（沒有存進來）`;
+  }
   // 社群貼文多半是公開內容，預設讓它可以被檢索用的模型讀到——
   // 這跟 Mesh Sync 相反（那邊收的是自己的對話，常有客戶名與報價）。
   // 要收私密社團的東西再把 popup 的開關打開。
@@ -669,18 +757,11 @@ async function syncToFocus4ai(p, key, drive) {
     `- 作者：${p.author || '未署名'}・${p.platformLabel}${p.timeText ? `・${p.timeText}` : ''}`,
     `- 原文：${p.permalink || '（抓不到連結）'}`,
     `- 收錄：${stamp}`,
-    // 知識庫存的是文字，圖片在 Drive 的那份文件裡。
-    // 只寫「12 張」的話，人從知識庫翻到這篇時看得到數字卻找不到圖。
-    // 不寫圖片網址是刻意的：臉書的圖床網址帶時效，寫進去幾天後
-    // 會全部變成破圖，那比只有數字更糟。
-    ...(p.images && p.images.length
-      ? [drive && drive.docUrl
-        ? `- 圖片：${p.images.length} 張 → [在 Drive 文件裡看](${drive.docUrl})`
-        : `- 圖片：${p.images.length} 張（沒有寫進 Drive，所以這裡沒有圖）`]
-      : []),
+    ...(imgLine ? [imgLine] : []),
     '',
     cleanText(p.text),
     '',
+    ...(assetMd.length ? [...assetMd, ''] : []),
   ].join('\n');
 
   const res = await fetchT(url, {
@@ -709,7 +790,7 @@ function cleanText(s) {
   return String(s || '')
     .replace(/\r/g, '')
     .replace(/ /g, ' ')
-    .replace(/[ --]/g, '')
+    .replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '')  // 寫跳脫形式：字面上的控制字元會讓整個檔被當成 binary，grep 從此靜音
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();

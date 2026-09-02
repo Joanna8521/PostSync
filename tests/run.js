@@ -387,9 +387,19 @@ pinSizes(document.getElementById('fixtures'));
     cleanAuthor('林志豪・這是一段夠長的內文，長到不可能是名字，用來確認作者欄不會把整段文章吃進去。'));
   check('時間戳不會被當成作者',
     cleanAuthor('・5小時') === '', cleanAuthor('・5小時'));
+  // 混淆字元一定要寫成跳脫形式。臉書塞的是 U+034F（組合用字元，看不見），
+  // 字面上寫進來的話這一行看起來只是普通字串，沒人看得出它在測什麼，
+  // 而且整個檔會被當成 binary，grep 從此對它靜音。
+  const OBF = '王大文\u034F 已驗證帳號';
+  // 混淆字元夾在名字**中間**才測得到東西。夾在「已驗證帳號」旁邊的話，
+  // 那段本來就會被洗掉，有沒有處理混淆字元結果都一樣——測試會假性全綠。
+  const OBF2 = '王\u034F大\u034F文';
   check('臉書的反爬混淆字元洗得掉',
-    cleanAuthor('王大文͏ 已驗證帳號') === '王大文',
-    JSON.stringify(cleanAuthor('王大文͏ 已驗證帳號')));
+    cleanAuthor(OBF) === '王大文',
+    JSON.stringify(cleanAuthor(OBF)));
+  check('混淆字元夾在名字中間也洗得掉',
+    OBF2.length === 5 && cleanAuthor(OBF2) === '王大文',
+    JSON.stringify(cleanAuthor(OBF2)));
 }
 
 // ── 檔名 ────────────────────────────────────────────
