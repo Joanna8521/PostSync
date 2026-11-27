@@ -1,0 +1,255 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # ubuntu-latest ships Chrome as `google-chrome`, which is the first name
+      # tools/run_tests.py looks for. Printed rather than assumed: a silent
+      # fallback to a different browser would make a green run mean less.
+      - name: which Chrome
+        run: |
+          which google-chrome
+          google-chrome --version
+
+      # The source scan, the five i18n checks, the README check, and then the
+      # test page in headless Chrome. Green all the way through or it did not
+      # pass; the script's exit code already says so.
+      - name: tools/run_tests.py
+        run: python3 tools/run_tests.py
+
+      - name: tools/check_permissions.py
+        run: python3 tools/check_permissions.py
+
+      # The zip has to carry _locales and i18n.js. Packaging walks the tree, so
+      # nothing in the code names those paths, and a build that quietly omitted
+      # them would install and then show every string as its key.
+      - name: the packaged zip carries the locales
+        run: |
+          python3 tools/build_zip.py
+          python3 - <<'PY'
+          import glob, sys, zipfile
+          zips = glob.glob("post-sync-v*.zip")
+          assert len(zips) == 1, zips
+          names = zipfile.ZipFile(zips[0]).namelist()
+          want = [
+              "post-sync-extension/_locales/zh_TW/messages.json",
+              "post-sync-extension/_locales/en/messages.json",
+              "post-sync-extension/_locales/ja/messages.json",
+              "post-sync-extension/src/i18n.js",
+          ]
+          missing = [w for w in want if w not in names]
+          if missing:
+              print(f"::error::the zip is missing {missing}")
+              sys.exit(1)
+          print(f"{zips[0]}: {len(names)} files, all four present")
+          PY
+
+  gates-have-teeth:
+    name: every gate rejects a broken input
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # A gate that cannot fail is worse than no gate: it grants confidence
+      # nothing earned. Each check below is broken on purpose and must turn the
+      # run red. If any of them stays green, the gate it belongs to has stopped
+      # being one, and that is what this job exists to notice.
+      #
+      # These were all verified by hand before being written down here. CI is
+      # what keeps them verified.
+      - name: break each one and require red
+        shell: bash
+        run: |
+          set -u
+          fail=0
+
+          # Restoring goes through git, so a dirty tree would be wiped by the
+          # first restore. In CI the checkout is always clean; run this locally
+          # on uncommitted work and it would eat it, so it stops instead.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the working tree is dirty; this job restores with git and would discard it"
+            git status --porcelain
+            exit 1
+          fi
+
+          # ── the lesson that produced this shape ──
+          #
+          # The first version of this job snapshotted with
+          # `cp -r extension tools /tmp/snap_1`, which fails outright: two
+          # sources and a destination that is not an existing directory. So no
+          # snapshot was ever taken, and then `restore` ran
+          # `rm -rf extension tools` and copied back from nothing.
+          #
+          # From that point the tree had no source in it at all. Every check
+          # after the first one went "red" because the files were gone, the job
+          # counted each as a pass, and it exited 0. A job whose whole purpose
+          # is catching gates that stopped working had become one of them.
+          #
+          # Two things fix it. Restoring goes through git, which cannot
+          # half-succeed the way that cp did. And every check now asserts the
+          # baseline is GREEN before breaking anything: a red result only means
+          # something if the same command was green a moment earlier.
+
+          require_green () {
+            if ! "$@" > /tmp/base 2>&1; then
+              echo "::error::baseline is not green, so no result below means anything"
+              echo "  command: $*"
+              sed 's/^/    /' /tmp/base | tail -15
+              exit 1
+            fi
+          }
+
+          restore () {
+            git checkout -- .
+            git clean -fdq
+          }
+
+          # break <description> <breaking-shell-command> -- <checking-command...>
+          expect_red () {
+            local what="$1"; local breaker="$2"; shift 2
+            [ "$1" = "--" ] && shift
+
+            require_green "$@"
+            if ! bash -c "$breaker"; then
+              echo "::error::could not even apply the break for: $what"
+              fail=1
+              restore
+              return
+            fi
+            if "$@" > /tmp/out 2>&1; then
+              echo "::error::STAYED GREEN after breaking it: $what"
+              sed 's/^/    /' /tmp/out | tail -8
+              fail=1
+            else
+              echo "  red as required: $what"
+            fi
+            restore
+          }
+
+          T=tools/run_tests.py
+          P=tools/check_permissions.py
+
+          # 1. A literal invisible character in the source. These run fine in
+          #    JS, so every test stays green, while the file counts as binary
+          #    and grep goes completely silent on it.
+          #
+          #    The character is written from its code point by python, not with
+          #    printf "\u200b". That printf has to survive YAML, then this
+          #    shell, then `bash -c`, then printf's own escape handling, and in
+          #    two local runs of this job it came out differently: once as the
+          #    character, once as the six letters. A break that does not
+          #    reliably break makes the check a coin toss, and a coin toss that
+          #    lands green is indistinguishable from a working gate.
+          expect_red "source scan: literal invisible character" \
+            'python3 -c "
+          import pathlib
+          p = pathlib.Path(\"extension/src/i18n.js\")
+          p.write_text(p.read_text(encoding=\"utf-8\") + \"const x = \" + chr(34) + chr(0x200B) + chr(34) + \";\" + chr(10), encoding=\"utf-8\")
+          "' \
+            -- python3 $T
+
+          # 2. A hand-edited messages.json. Three files written by hand drift,
+          #    and the line that drifted shows up as the key itself, under one
+          #    language only.
+          expect_red "i18n: messages.json edited by hand" \
+            'python3 -c "
+          import json, pathlib
+          p = pathlib.Path(\"extension/_locales/ja/messages.json\")
+          d = json.loads(p.read_text(encoding=\"utf-8\"))
+          d[\"btnSave\"][\"message\"] = \"edited by hand\"
+          p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + chr(10), encoding=\"utf-8\")
+          "' \
+            -- python3 $T
+
+          # 3. A message key the catalogue does not have.
+          #
+          #    The key has to be one popup.js really CALLS. The first version
+          #    broke t('btnSave'), and btnSave only ever appears as a
+          #    data-i18n attribute in popup.html, so the sed matched nothing,
+          #    the check stayed green, and the job reported a pass. A break
+          #    that does not apply is worse than no check.
+          expect_red "i18n: a key that is not in the catalogue" \
+            "grep -q \"t('connDone')\" extension/src/popup.js && sed -i \"s/t('connDone')/t('connDnoe')/\" extension/src/popup.js" \
+            -- python3 $T
+
+          # 4. A substitution slot missing from one language. The number then
+          #    vanishes, or lands in the wrong place, in that language only.
+          expect_red 'i18n: $1 missing from one language' \
+            'sed -i "s/\"\$1 kept locally\"/\"kept locally\"/" tools/messages.py && python3 tools/build_messages.py > /dev/null' \
+            -- python3 $T
+
+          # 5. A README whose language switcher lost a link. Nothing breaks;
+          #    readers of one language simply cannot find the others.
+          expect_red "README: a switcher link removed" \
+            "sed -i '1s|\[繁體中文\](README.md) · ||' README.ja.md" \
+            -- python3 $T
+
+          # 6. A permission declared and used by nothing. It only slows store
+          #    review, and nothing in the extension would behave differently.
+          expect_red "permissions: an over-requested host" \
+            'python3 -c "
+          import json, pathlib
+          p = pathlib.Path(\"extension/manifest.json\")
+          d = json.loads(p.read_text(encoding=\"utf-8\"))
+          d[\"host_permissions\"].append(\"https://nothing-uses-this.example/*\")
+          p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + chr(10), encoding=\"utf-8\")
+          "' \
+            -- python3 $P
+
+          # And the tree has to be clean again at the end. A leftover edit would
+          # mean one of the restores did not take, which is how the first
+          # version of this job hid its own failure.
+          if ! git diff --quiet || [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the working tree is not clean after the last restore"
+            git status --porcelain
+            fail=1
+          fi
+
+          echo
+          if [ "$fail" -ne 0 ]; then
+            echo "at least one gate no longer rejects what it is supposed to reject."
+            exit 1
+          fi
+          echo "every gate turned red on a broken input, and the tree is clean."
+
+  i18n-render:
+    name: both pages render in all three languages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # The static checks in run_tests.py cover the catalogue: three files in
+      # step, every key used, no key unused, slots consistent. What they cannot
+      # see is whether fill() ever runs. While this was being written, popup.js
+      # had not called it yet: every static check was green and the popup was a
+      # blank panel. So one job renders both pages in each language and fails
+      # on anything left empty or showing its key.
+      - run: npm install --no-save playwright@1.49.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/check_i18n_render.js
