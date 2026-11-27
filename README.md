@@ -233,8 +233,8 @@ Post Sync 剛好就是它文件裡說的那條路：使用者自己按、跑在�
 ## CI
 
 ```yaml
-tests                                    # 原始碼掃描、五道多語言檢查、README 檢查、142 項測試、權限涵蓋度、打包
-every gate rejects a broken input        # 六道閘門各弄壞一次，必須全部變紅
+tests                                    # 原始碼掃描、五道多語言檢查、README 檢查、絕對路徑掃描、142 項測試、權限涵蓋度、打包
+every gate rejects a broken input        # 七道閘門各弄壞一次，必須全部變紅
 both pages render in all three languages # 真瀏覽器渲染 popup 與 onboarding ×3 語
 ```
 
@@ -260,6 +260,7 @@ both pages render in all three languages # 真瀏覽器渲染 popup 與 onboardi
 |---|---|
 | 塞一個字面的不可見字元 | `printf "\u200b"` 要穿過 YAML、shell、`bash -c`、printf 四層，本機跑兩次結果不一樣：一次是字元、一次是六個字母。改用 Python 從碼位寫 |
 | 用一個目錄沒有的 key | 原本改 `t('btnSave')`，而 `btnSave` 只在 `popup.html` 的 `data-i18n` 裡，`popup.js` 從來沒叫它。sed 沒命中，檢查照樣綠 |
+| 寫死的絕對路徑 | `tools/check_i18n_render.js` 第一版寫了 `/home/user/postsync/extension`，也就是寫它的那台機器。本機跑得過，CI 第一次跑就 ENOENT，報的是一個根本不在這個 repo 裡的路徑。現在有一道掃描擋這一類 |
 
 **一個不會真的壞掉的破壞，比沒有這個檢查更糟。**
 

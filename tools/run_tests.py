@@ -174,6 +174,45 @@ def check_readmes() -> int:
     return bad
 
 
+# ── 硬寫的絕對路徑 ──────────────────────────────────
+# tools/check_i18n_render.js 第一版寫了
+# `const EXT = '/home/user/postsync/extension'`，也就是寫它的那台機器。
+# 本機跑得過，因為那個路徑在那台機器上存在。CI 第一次跑就 ENOENT，而且報的是
+# 一個根本不在這個 repo 裡的路徑。
+#
+# 這一類很難用眼睛抓，因為在作者的機器上它永遠是對的。
+
+ABS_PATH = re.compile(r"""['"](/(?:home|Users|tmp|var|opt|private)/[^'"\s]*)['"]""")
+
+# 例外：真的在講系統上那個位置的，不是在講這個 repo 的檔案。
+ABS_PATH_OK = (
+    "/Applications/Google Chrome.app",   # macOS 上 Chrome 真的在那裡
+    "/Applications/Chromium.app",
+)
+
+
+def check_absolute_paths() -> int:
+    bad = 0
+    files = sorted((ROOT / "tools").rglob("*.py")) + sorted((ROOT / "tools").rglob("*.js"))
+    files += sorted((ROOT / "extension").rglob("*.js"))
+    for f in files:
+        if "__pycache__" in f.parts:
+            continue
+        for n, line in enumerate(f.read_text(encoding="utf-8").split("\n"), 1):
+            if line.lstrip().startswith("#") or line.lstrip().startswith("//"):
+                continue
+            for m in ABS_PATH.finditer(line):
+                hit = m.group(1)
+                if any(hit.startswith(ok) for ok in ABS_PATH_OK):
+                    continue
+                bad += 1
+                print(f"  ❌ {f.relative_to(ROOT)}:{n} 寫死了絕對路徑 {hit}"
+                      f"（換一台機器就壞，而在寫的人那台永遠是對的）")
+    if not bad:
+        print("  ✅ 沒有寫死的絕對路徑")
+    return bad
+
+
 def chrome() -> str:
     for c in CANDIDATES:
         if Path(c).exists() or shutil.which(c):
@@ -189,6 +228,10 @@ def main() -> None:
 
     print("=== 多語言 ===")
     if check_i18n() + check_readmes():
+        sys.exit(1)
+
+    print("=== 可攜性 ===")
+    if check_absolute_paths():
         sys.exit(1)
 
     if not PAGE.exists():

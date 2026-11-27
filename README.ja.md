@@ -273,8 +273,8 @@ popup で「persona-to-skill のインポートファイルを残す」をオン
 ## CI
 
 ```yaml
-tests                                    # ソース走査、5 つの多言語チェック、README チェック、142 のテスト、権限カバー率、パッケージ化
-every gate rejects a broken input        # 6 つのゲートを意図的に壊し、すべて赤になることを要求
+tests                                    # ソース走査、5 つの多言語チェック、README チェック、絶対パス走査、142 のテスト、権限カバー率、パッケージ化
+every gate rejects a broken input        # 7 つのゲートを意図的に壊し、すべて赤になることを要求
 both pages render in all three languages # 実際のブラウザで両ページを 3 言語それぞれ描画
 ```
 
@@ -305,6 +305,7 @@ both pages render in all three languages # 実際のブラウザで両ページ�
 |---|---|
 | 字面の不可視文字を挿入 | `printf "\u200b"` は YAML、このシェル、`bash -c`、printf 自身のエスケープを通り抜ける必要があります。ローカルで 2 回実行したら結果が違いました。1 回は文字、1 回は 6 文字。現在は python がコードポイントから書きます |
 | カタログにないキーを使う | `t('btnSave')` を変更していましたが、`btnSave` は `popup.html` の `data-i18n` 属性にしか現れず、`popup.js` は呼んでいません。sed は何にも一致せず、チェックは緑のままでした |
+| 絶対パスの直書き | `tools/check_i18n_render.js` には `/home/user/postsync/extension` が入っていました。書いた本人のマシンのパスです。ローカルでは通り、CI の初回実行でこのリポジトリに存在しないパスの ENOENT で失敗しました。現在はこの種類を走査が止めます |
 
 **確実に壊れない壊しは、チェックがないより悪いです。**
 

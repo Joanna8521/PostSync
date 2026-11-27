@@ -219,6 +219,22 @@ jobs:
           "' \
             -- python3 $P
 
+          # 7. A hardcoded absolute path. Impossible to spot by eye, because
+          #    on the author's machine it is always correct. This is not
+          #    hypothetical: check_i18n_render.js shipped with
+          #    '/home/user/postsync/extension' in it, passed locally, and
+          #    failed on CI's first run with ENOENT on a path that is not in
+          #    this repository at all.
+          expect_red "portability: a hardcoded absolute path" \
+            'python3 -c "
+          import pathlib
+          p = pathlib.Path(\"tools/check_i18n_render.js\")
+          p.write_text(p.read_text(encoding=\"utf-8\").replace(
+              \"path.join(__dirname, \u0027..\u0027, \u0027extension\u0027)\",
+              \"\u0027/home/someone/postsync/extension\u0027\"), encoding=\"utf-8\")
+          "' \
+            -- python3 $T
+
           # And the tree has to be clean again at the end. A leftover edit would
           # mean one of the restores did not take, which is how the first
           # version of this job hid its own failure.

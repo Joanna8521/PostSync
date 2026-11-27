@@ -280,8 +280,8 @@ that trades on a likeness.
 ## CI
 
 ```yaml
-tests                                    # Source scan, five i18n checks, README check, 142 tests, permission coverage, packaging
-every gate rejects a broken input        # Six gates broken on purpose, each required to go red
+tests                                    # Source scan, five i18n checks, README check, absolute-path scan, 142 tests, permission coverage, packaging
+every gate rejects a broken input        # Seven gates broken on purpose, each required to go red
 both pages render in all three languages # Both pages in a real browser, in each language
 ```
 
@@ -313,6 +313,7 @@ Two of the breaks were broken too:
 |---|---|
 | Inserting a literal invisible character | `printf "\u200b"` has to survive YAML, this shell, `bash -c`, and printf's own escapes. Two local runs gave different results: once the character, once the six letters. Now written from its code point by python |
 | Using a key the catalogue lacks | It changed `t('btnSave')`, and `btnSave` only ever appears as a `data-i18n` attribute in `popup.html`; `popup.js` never calls it. The sed matched nothing and the check stayed green |
+| A hardcoded absolute path | `tools/check_i18n_render.js` shipped with `/home/user/postsync/extension` in it, which is the machine it was written on. It passed locally and failed on CI's first run with ENOENT on a path that is not in this repository at all. A scan now blocks the class |
 
 **A break that does not reliably break is worse than no check at all.**
 
