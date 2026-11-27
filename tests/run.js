@@ -503,6 +503,84 @@ pinSizes(document.getElementById('fixtures'));
   host.remove();
 }
 
+// ── persona-to-skill 匯入檔 ─────────────────────────
+// 這一組釘的是「匯出檔看起來很正常，但對面的閘門會收到一個有根據的錯誤值」。
+// 那種錯不會有任何畫面告訴你：JSON 長得好好的，欄位都在，人也讀得懂。
+
+{
+  group('persona-to-skill 匯入檔');
+  const P = self.PostSyncExportP2S;
+  const ch = (n) => String.fromCharCode(n);
+
+  // 雙向覆寫讓位元組跟螢幕上看到的不一樣。匯出檔是會被人打開看的東西，
+  // 一個「顯示的跟存的不同」的檔案不該從這裡出去。
+  const bidi = 'a' + ch(0x202E) + 'b' + ch(0x202C) + 'c' + ch(0x200B) + ch(0xFEFF);
+  check('雙向覆寫與零寬字元被清掉', P.scrub(bidi) === 'abc', P.scrub(bidi));
+
+  // 空的內文產生一筆「有欄位但沒內容」的記錄，對面會把它當成一個來源算進
+  // 密度分母，於是整批素材的錨點密度被稀釋。寧可不給。
+  check('空內文不產生記錄', P.toRecord({ text: '   ', author: '王小明' }) === null,
+    P.toRecord({ text: '   ', author: '王小明' }));
+
+  // authorGuessed 為真表示作者是從貼文第一行推的，不是頁面上標的。
+  // 這一欄掉了，每一筆都會看起來像「作者已確認」。
+  const guessed = P.toRecord({ text: '內容', author: '王小明', authorGuessed: true });
+  const known = P.toRecord({ text: '內容', author: '王小明' });
+  check('猜來的作者帶著 author_guessed 過去', guessed.author_guessed === true, guessed);
+  check('抓到的作者不會被標成猜的', known.author_guessed === false, known);
+
+  // 引用轉推裡夾的是別人的話。併進 text 的話，別人說的話會被當成本人的
+  // 方法論萃取出來——那是整個專案最不能出的錯。
+  const quoted = P.toRecord({
+    text: '這個說法我不同意。', quotedText: '定價就是成本加三成。',
+  });
+  check('別人的話不併進本人的內文',
+    quoted.text === '這個說法我不同意。', quoted.text);
+  check('別人的話留在自己的欄位',
+    quoted.embedded_other_party === '定價就是成本加三成。', quoted);
+
+  // 拿不到收錄時間就留空。用「現在」補等於把收錄時間寫成匯出時間，
+  // 而對面會拿這個欄位判斷素材的時間跨度。
+  check('拿不到收錄時間就留空', P.isoOrEmpty(undefined) === '', P.isoOrEmpty(undefined));
+  check('拿不到收錄時間就留空（0 也是拿不到）', P.isoOrEmpty(0) === '', P.isoOrEmpty(0));
+  check('有收錄時間就給 ISO',
+    P.isoOrEmpty(Date.UTC(2026, 10, 27, 1, 45)) === '2026-11-27T01:45:00.000Z',
+    P.isoOrEmpty(Date.UTC(2026, 10, 27, 1, 45)));
+
+  // 圖片不進匯入檔，但要留張數，不然看不出原文還有圖。
+  const withImgs = P.toRecord({ text: '內容', images: ['a', 'b', 'c'] });
+  check('圖片只留張數、不留網址',
+    withImgs.image_count === 3 && !('images' in withImgs), withImgs);
+
+  const file = P.buildFile([
+    { text: '第一則', author: '王小明' },
+    { text: '', author: '王小明' },
+    { text: '第二則', author: '王小明' },
+  ], '1.5.0');
+
+  check('契約版本寫在檔案裡', file.contract === 'persona-to-skill/import/v1', file.contract);
+  check('兩筆有內容的進檔、空的那筆被跳過',
+    file.records.length === 2 && file.skipped_empty === 1, file);
+  check('版本有進 exported_by', file.exported_by === 'post-sync 1.5.0', file.exported_by);
+  check('沒給版本就只寫 post-sync、不寫 undefined',
+    P.buildFile([{ text: 'x' }]).exported_by === 'post-sync',
+    P.buildFile([{ text: 'x' }]).exported_by);
+
+  // 這兩個是刻意不寫的。分級取決於出版形式、對象取決於使用者要重建誰，
+  // 兩個都不是這支擴充知道的事。猜一個預設值進去，對面的閘門會收到一個
+  // 看起來有根據的錯誤值——那比沒有值危險得多，因為沒有值會被擋下來。
+  check('不自己猜來源分級（tier）',
+    !('tier' in file) && !file.records.some((r) => 'tier' in r), Object.keys(file));
+  check('不自己猜重建對象（subject）',
+    !('subject' in file) && !file.records.some((r) => 'subject' in r), Object.keys(file));
+  check('而且檔案裡講清楚那兩欄要人自己填',
+    /tier/.test(file.note) && /subject/.test(file.note), file.note);
+
+  check('檔名帶日期時間，不會互相蓋掉',
+    P.fileName(new Date(2026, 10, 27, 9, 45)) === 'post-sync-p2s-20261127-0945.json',
+    P.fileName(new Date(2026, 10, 27, 9, 45)));
+}
+
 // ── 結果 ────────────────────────────────────────────
 const sum = document.getElementById('summary');
 sum.textContent = fail === 0

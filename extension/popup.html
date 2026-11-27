@@ -127,6 +127,30 @@
   </section>
 
   <section>
+    <div class="row">
+      <input type="checkbox" id="p2sCollect">
+      <label for="p2sCollect" class="grow"><b>留一份 persona-to-skill 匯入檔</b></label>
+    </div>
+    <div class="sub">
+      <div class="hint">
+        預設關閉。打開之後，你<b>自己按下收錄</b>的貼文會多留一份原文在本機，
+        匯出成 persona-to-skill 吃的 JSON。<br>
+        它不會去抓你沒按的東西，也不會送去任何地方——檔案存到哪裡由你按下面那顆鈕決定。
+      </div>
+      <div class="row" style="margin-top:8px">
+        <span class="grow small" id="p2sCount">尚未統計</span>
+        <button id="p2sClear">清空</button>
+      </div>
+      <button id="p2sExport" style="width:100%;margin-top:8px">匯出匯入檔</button>
+      <div class="hint">
+        匯出檔<b>不會</b>幫你填來源等級與人物，那兩欄要你自己判斷：
+        哪些是本人親筆、哪些是小編或代筆，機器看不出來，
+        persona-to-skill 也因此不准它自己猜。
+      </div>
+    </div>
+  </section>
+
+  <section>
     <button class="primary" id="save">儲存設定</button>
     <div class="msg" id="msg"></div>
     <div class="row" style="margin-top:8px">

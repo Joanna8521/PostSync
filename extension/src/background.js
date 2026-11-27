@@ -9,7 +9,7 @@
 
 // 檔名規則與預設值都跟 popup／content script 共用同一份，
 // 兩邊各寫一份遲早會分岔：畫面顯示 A、實際寫進 B，而且不會有任何錯誤訊息
-importScripts('naming.js', 'defaults.js');
+importScripts('naming.js', 'defaults.js', 'export_p2s.js');
 const { topicOf, docStem } = self.POST_SYNC_NAME;
 const DEF = self.POST_SYNC_DEFAULTS;
 
@@ -78,6 +78,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === 'POSTSYNC_F4_TEST') {
     testFocus4ai(msg.base).then(sendResponse);
+    return true;
+  }
+  if (msg.type === 'POSTSYNC_P2S_COUNT') {
+    chrome.storage.local.get(['psExport'])
+      .then(({ psExport = [] }) => sendResponse({ ok: true, count: psExport.length }))
+      .catch((e) => sendResponse({ ok: false, error: errMsg(e) }));
+    return true;
+  }
+  if (msg.type === 'POSTSYNC_P2S_EXPORT') {
+    chrome.storage.local.get(['psExport'])
+      .then(({ psExport = [] }) => {
+        const E = self.PostSyncExportP2S;
+        const mf = chrome.runtime.getManifest();
+        const file = E.buildFile(psExport, mf.version);
+        sendResponse({
+          ok: true,
+          count: file.records.length,
+          name: E.fileName(new Date()),
+          json: JSON.stringify(file, null, 2),
+        });
+      })
+      .catch((e) => sendResponse({ ok: false, error: errMsg(e) }));
+    return true;
+  }
+  if (msg.type === 'POSTSYNC_P2S_CLEAR') {
+    chrome.storage.local.set({ psExport: [] })
+      .then(() => sendResponse({ ok: true }))
+      .catch((e) => sendResponse({ ok: false, error: errMsg(e) }));
     return true;
   }
   if (msg.type === 'POSTSYNC_STATUS') {
@@ -270,6 +298,28 @@ async function checkSeen(key) {
   return psSeen[key] || null;
 }
 
+// persona-to-skill 匯入檔的素材。
+//
+// 跟 markSeen 分開存，因為那邊是去重索引、只留指紋跟連結，這邊要留原文。
+// 而留原文是另一回事，所以它是一個預設關閉的開關：這支擴充的姿態是
+// 「擷取一律是你自己按的」，那條姿態如果在背後默默累積內容就不成立了。
+async function recordForExport(p) {
+  const s = await chrome.storage.sync.get(['p2sCollect', 'p2sCap']);
+  if (!s.p2sCollect) return;
+
+  const rec = self.PostSyncExportP2S.toRecord(p);
+  if (!rec) return;
+
+  const { psExport = [] } = await chrome.storage.local.get(['psExport']);
+  // 同一篇收第二次就覆蓋，不要在匯出檔裡出現兩份一樣的來源。
+  const i = rec.url ? psExport.findIndex((r) => r.url === rec.url) : -1;
+  if (i >= 0) psExport[i] = rec; else psExport.push(rec);
+
+  const cap = Number(s.p2sCap) || DEF.p2sCap;
+  if (psExport.length > cap) psExport.splice(0, psExport.length - cap);
+  await chrome.storage.local.set({ psExport });
+}
+
 async function markSeen(key, entry) {
   const { psSeen = {} } = await chrome.storage.local.get(['psSeen']);
   psSeen[key] = entry;
@@ -334,6 +384,15 @@ async function handleCapture(p, force, tabId) {
     } catch (e) {
       f4Error = errMsg(e);
     }
+  }
+
+  // 兩個目的地都掛了也要記，因為匯入檔那條本來就不靠它們：
+  // 它是本機下載，沒有伺服器也沒有驗證。
+  try {
+    await recordForExport(p);
+  } catch (e) {
+    // 匯出素材沒記到，不應該讓這一次收錄算失敗。這裡吞掉是刻意的：
+    // 使用者要的是那篇貼文進 Drive 或知識庫，匯入檔是附帶的。
   }
 
   const ok = !!(drive || f4);
