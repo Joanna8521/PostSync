@@ -1,3 +1,5 @@
+[English](README.en.md) · **繁體中文** · [日本語](README.ja.md)
+
 # ⚡ Post Sync — 社群貼文收藏器
 
 開源的 Chrome 擴充功能。在 **Facebook / Threads / X / Instagram / LinkedIn**
@@ -11,6 +13,7 @@ Focus4ai 知識庫：
 - **同一篇收第二次會先問你**，並附上先前那份的連結
 - **最小權限**：只用 `drive.file` scope，只碰這個擴充自己建立的檔案，
   看不到你 Drive 裡的其他東西
+- **介面有繁體中文、English、日本語**，跟著瀏覽器語言跑
 
 ## 怎麼用
 
@@ -89,6 +92,35 @@ Chrome 的使用者也走得通，而且完全不碰 Google。
 
 manifest 內含固定的 `key`（公鑰），所以每個人載入後的擴充 ID 都相同：
 `mbckgmofgjkmfjofljddhgbhglfhjbom`，共用同一個 OAuth client 才會成立。
+
+## 語言
+
+介面跟著瀏覽器語言跑，不用設定。
+
+| 瀏覽器語言 | 顯示 |
+|---|---|
+| 中文（繁體） | 繁體中文 |
+| 日文 | 日本語 |
+| 英文 | English |
+| 其他 | English |
+
+popup、設定導覽、浮動按鈕、toast、診斷輸出、錯誤訊息、寫進 Drive 的 Doc
+與寫進知識庫的 Markdown，全部跟著走。
+
+**瀏覽的頁面是什麼語言，那是另一條軸。** `adapters.js` 與 `naming.js` 比對的
+是臉書**渲染出來**的字：互動列、展開收合的標籤、相對時間。那幾份必須**同時**
+認得每一種語言，而不是切換 —— 一個把介面設成日文的人，瀏覽的可能是中文版
+臉書。兩軸混成一條就會把抽取器弄壞：介面切到日文的那一刻，中文版臉書的
+「讚 留言 分享」會整列掃進內文。
+
+介面字串放在 `tools/messages.py`，三種語言並排，由 `tools/build_messages.py`
+產生三份 `extension/_locales/*/messages.json`。三個檔手寫一定會分岔，而分岔的
+那一條會在某個語言下顯示成 key 本身 —— 只有剛好有人用那個語言打開那一頁才
+看得見。`tools/run_tests.py` 會重新產生一次再比對，所以手改 `messages.json`
+不會靜靜地生效。
+
+並排還有第二個好處：翻譯好不好，要三種語言放在一起才比得出來。分三個檔看，
+每一條都像對的。
 
 ## OAuth（想用自己的 client 才需要看）
 
@@ -203,8 +235,10 @@ extension/
 ├── manifest.json        # MV3，含固定 key（公鑰）與 oauth2 設定
 ├── popup.html           # 收藏對象切換、連線狀態、Focus4ai 設定、寫入紀錄
 ├── onboarding.html      # 安裝後自動打開的設定導覽
+├── _locales/            # zh_TW / en / ja，由 tools/messages.py 產生
 ├── icons/
 └── src/
+    ├── i18n.js          # 把 _locales 的字填進 HTML。沒有一處 innerHTML
     ├── adapters.js      # 各平台的錨點（唯一需要跟著平台改版調的地方）
     ├── naming.js        # 檔名主題（service worker 與測試共用）
     ├── extract.js       # DOM → 資料（純函式，可測）
@@ -217,6 +251,13 @@ extension/
 tests/
 ├── run.html             # 抽取層：用瀏覽器直接打開就跑
 └── live.html            # 浮動按鈕：假動態牆＋假的 chrome API，實際跑 content.js
+tools/
+├── messages.py          # 三種語言並排。這一份是正本
+├── build_messages.py    # 產生 _locales。--check 只比對不寫檔
+├── jsstrings.py         # 逐字走過 JS，分出字串字面與註解
+├── run_tests.py         # 原始碼掃描、多語言檢查，再用 headless Chrome 跑測試頁
+├── check_permissions.py # manifest 的權限涵蓋度
+└── check_i18n_render.js # 把兩頁用三種語言渲染一次（要 Playwright）
 ```
 
 - `key.pem`（專案根目錄、不進 git）：打包 .crx 時才需要的私鑰。
@@ -246,6 +287,10 @@ python3 tools/check_permissions.py # manifest 的權限涵蓋度
 - **臉書送不同的 DOM 給不同人**（A/B 測試與分批推送）。已知在用的三種
   貼文容器：`role="article"`、`div[aria-labelledby]`、`div[aria-posinset]`，
   三種各有 fixture。「我這邊可以」在這個平台上不能推論到別人身上。
+- **三種語言的介面**：`**粗體**` 標記的渲染，以及訊息裡含 HTML 的時候要當成
+  文字顯示、不能解析成節點
+- **頁面語言的比對表**在中文、英文、日文下各測一遍，外加 11 句真內文確認
+  不會被誤判成時間戳
 
 **`tests/live.html`** —— 浮動按鈕。假的動態牆＋假的 `chrome` API，
 實際把 `content.js` 跑起來，左下角面板會報出：content script 有沒有注入、

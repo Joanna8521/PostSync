@@ -45,6 +45,10 @@
       return r[0] === r[1] ? a : a + '-' + b;
     }).join('') + ']', 'g');
 
+  // 跟 extract.js、naming.js 同一個做法：回傳代碼，翻譯函式由呼叫端注入。
+  let tr = (key) => key;
+  function setTranslator(fn) { tr = (typeof fn === 'function') ? fn : ((key) => key); }
+
   function scrub(s) {
     return String(s == null ? '' : s).replace(INVISIBLE, '');
   }
@@ -104,9 +108,10 @@
       contract: CONTRACT,
       exported_at: new Date().toISOString(),
       exported_by: 'post-sync' + (version ? ' ' + scrub(version) : ''),
-      note: '分級（tier）與對象（subject）要在匯入時指定：'
-          + '分級取決於出版形式，對象取決於你要重建誰，兩個都不是這支擴充'
-          + '知道的事。',
+      // 這一句寫進匯出檔，所以它跟著介面語言：讀這個檔的是按下匯出的人。
+      // 本檔不碰 chrome.*（檔頭那句話要是真的），所以翻譯函式注入進來，
+      // 沒注入就用英文——這一句的讀者至少看得懂英文比看得懂代碼好。
+      note: tr('p2sNote'),
       records: records,
       skipped_empty: skipped
     };
@@ -121,6 +126,7 @@
 
   root.PostSyncExportP2S = {
     CONTRACT: CONTRACT,
+    setTranslator: setTranslator,
     scrub: scrub,
     isoOrEmpty: isoOrEmpty,
     toRecord: toRecord,

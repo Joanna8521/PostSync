@@ -50,6 +50,130 @@ def scan_sources() -> int:
     print("  ✅ 原始碼沒有字面上的不可見字元" if not bad else f"  {bad} 處")
     return bad
 
+# ── 多語言：三份 messages.json 與用到的 key ─────────────
+# 為什麼要有這一段：i18n 壞掉的方式全部是安靜的。
+#
+#   ・三份 messages.json 分岔 → 某一個語言下某一條顯示成 key 本身，
+#     而那只有在剛好有人用那個語言打開那一頁的時候才看得到；
+#   ・程式裡 getMessage('abc') 但目錄裡沒有 abc → 同上；
+#   ・目錄裡有一條但沒人用 → 翻譯三遍的白工，而且會一直留著；
+#   ・替換位置（$1、$2）三語不一致 → 某個語言下數字跑掉或消失。
+#
+# 全部都不會報錯，所以只能掃。
+
+MSG_KEY_CALLS = re.compile(r"""(?:\bT|\btr|\bt|getMessage)\(\s*['"]([A-Za-z0-9_]+)['"]""")
+MSG_KEY_ATTRS = re.compile(r"""data-i18n(?:-[a-z]+)?=["']([A-Za-z0-9_]+)["']""")
+MSG_KEY_MANIFEST = re.compile(r"__MSG_([A-Za-z0-9_]+)__")
+
+
+def check_i18n() -> int:
+    sys.path.insert(0, str(ROOT / "tools"))
+    import build_messages  # noqa: PLC0415
+    from messages import MESSAGES  # noqa: PLC0415
+
+    bad = 0
+
+    # ① 三份檔要跟目錄一致
+    bad += build_messages.main(["--check"])
+
+    declared = {m[0] for m in MESSAGES}
+
+    # ② 程式裡用到的 key 都要在目錄裡
+    used = set()
+    for f in sorted((ROOT / "extension").rglob("*.js")):
+        if "_locales" in f.parts:
+            continue
+        src = f.read_text(encoding="utf-8")
+        used |= set(MSG_KEY_CALLS.findall(src))
+    for f in sorted((ROOT / "extension").glob("*.html")):
+        used |= set(MSG_KEY_ATTRS.findall(f.read_text(encoding="utf-8")))
+    used |= set(MSG_KEY_MANIFEST.findall(
+        (ROOT / "extension" / "manifest.json").read_text(encoding="utf-8")))
+
+    # t() 跟 tr() 的名字太短，會誤抓到別的同名函式。只回報真的不在目錄裡、
+    # 而且長得像訊息 key 的（駝峰、至少兩個字）。誤抓的那些會落在這裡，
+    # 所以寧可少報也不要每次都紅——這一條擋的是「打錯 key」，不是命名風格。
+    missing = sorted(k for k in used - declared
+                     if len(k) > 3 and re.search(r"[a-z][A-Z]", k))
+    if missing:
+        bad += 1
+        print(f"  ❌ 程式裡用了目錄沒有的 key：{', '.join(missing)}")
+
+    # ③ 目錄裡有但沒人用
+    orphan = sorted(declared - used)
+    if orphan:
+        bad += 1
+        print(f"  ❌ 目錄裡有但沒有人用的 key：{', '.join(orphan)}")
+
+    # ④ 替換位置三語要一致
+    for key, _desc, *langs in MESSAGES:
+        slots = [set(re.findall(r"\$\d", s)) for s in langs]
+        if slots[0] != slots[1] or slots[0] != slots[2]:
+            bad += 1
+            print(f"  ❌ {key} 的替換位置三語不一致：{[sorted(s) for s in slots]}")
+
+    # ⑤ 幾句話在三種語言下都必須講到的東西。
+    #    p2sNote 是寫進 persona-to-skill 匯入檔的那一句，它的工作就是講明
+    #    tier 與 subject 要人自己填。某個語言漏講，那個語言的使用者就不知道。
+    must = {"p2sNote": ["tier", "subject"]}
+    by_key = {m[0]: m for m in MESSAGES}
+    for key, words in must.items():
+        if key not in by_key:
+            bad += 1
+            print(f"  ❌ 目錄裡找不到 {key}")
+            continue
+        for lang_name, s in zip(("繁中", "英", "日"), by_key[key][2:]):
+            miss = [w for w in words if w not in s]
+            if miss:
+                bad += 1
+                print(f"  ❌ {key} 的{lang_name}版沒有講到：{', '.join(miss)}")
+
+    if not bad:
+        print(f"  ✅ {len(MESSAGES)} 條訊息，三種語言齊備，沒有缺的也沒有多的")
+    return bad
+
+
+# ── README：三種語言都要在，而且互相連得到 ──────────
+# 這一條擋的是「以後多加一種語言，忘了補某一份的切換列」。那種漏不會壞掉
+# 任何東西，只會讓某個語言的讀者找不到別的語言——而寫的人看不到，因為他
+# 看的是自己剛改的那一份。
+
+READMES = {
+    "README.md": "繁體中文",
+    "README.en.md": "English",
+    "README.ja.md": "日本語",
+}
+
+
+def check_readmes() -> int:
+    bad = 0
+    for name, label in READMES.items():
+        path = ROOT / name
+        if not path.exists():
+            bad += 1
+            print(f"  ❌ 少了 {name}")
+            continue
+        first = path.read_text(encoding="utf-8").split("\n", 1)[0]
+        # 自己那一份要是粗體（表示「你正在看這一份」），不是連結
+        if f"**{label}**" not in first:
+            bad += 1
+            print(f"  ❌ {name} 的切換列沒有把自己標成粗體（應該有 **{label}**）")
+        # 另外兩份要是連得到的連結
+        for other, other_label in READMES.items():
+            if other == name:
+                continue
+            link = f"[{other_label}]({other})"
+            if link not in first:
+                bad += 1
+                print(f"  ❌ {name} 的切換列少了 {link}")
+            elif not (ROOT / other).exists():
+                bad += 1
+                print(f"  ❌ {name} 連到不存在的 {other}")
+    if not bad:
+        print(f"  ✅ {len(READMES)} 份 README 都在，切換列互相連得到")
+    return bad
+
+
 def chrome() -> str:
     for c in CANDIDATES:
         if Path(c).exists() or shutil.which(c):
@@ -61,6 +185,10 @@ def chrome() -> str:
 def main() -> None:
     print("=== 原始碼掃描 ===")
     if scan_sources():
+        sys.exit(1)
+
+    print("=== 多語言 ===")
+    if check_i18n() + check_readmes():
         sys.exit(1)
 
     if not PAGE.exists():

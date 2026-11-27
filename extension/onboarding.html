@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>Post Sync — 開始使用</title>
+<title data-i18n="obTitle"></title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -35,56 +35,49 @@
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>⚡ Post Sync</h1><p>滑到想收的貼文，按一下就存起來</p></div></header>
+<header><div class="wrap"><h1>⚡ Post Sync</h1><p data-i18n="brandTagline"></p></div></header>
 <div class="wrap">
 
-  <h2>1. 連接 Google（要存進 Drive 才需要）</h2>
+  <h2 data-i18n="obStep1"></h2>
   <div class="card">
-    <p>你的內容只會寫進<b>你自己的</b>雲端硬碟。本擴充沒有任何自己的伺服器。</p>
-    <p style="margin-top:10px"><button id="connect">連接 Google</button></p>
+    <p data-i18n="obStep1Body"></p>
+    <p style="margin-top:10px"><button id="connect" data-i18n="btnConnectGoogle"></button></p>
     <div class="msg" id="msg"></div>
   </div>
 
-  <h2>2. 到社群頁面試一次</h2>
+  <h2 data-i18n="obStep2"></h2>
   <div class="card">
-    <p>打開下面任一個網站，捲動到一則貼文 —— 它的右邊會浮出
-      <b>「⚡ 收這篇」</b>，同時那一則會有一圈淡紫外框，告訴你按下去會收哪一篇。</p>
+    <p data-i18n="obStep2Body"></p>
     <table>
-      <tr><th>平台</th><th>網址</th></tr>
+      <tr><th data-i18n="obColPlatform"></th><th data-i18n="obColUrl"></th></tr>
       <tr><td>Facebook</td><td>facebook.com</td></tr>
       <tr><td>Threads</td><td>threads.com</td></tr>
       <tr><td>X</td><td>x.com</td></tr>
       <tr><td>Instagram</td><td>instagram.com</td></tr>
       <tr><td>LinkedIn</td><td>linkedin.com</td></tr>
     </table>
-    <p style="margin-top:12px">或者<b>直接在貼文上按右鍵 →「⚡ 收這篇貼文」</b>。
-      指哪篇收哪篇，最不會出錯，浮動按鈕沒出來的時候也還能用。</p>
-    <p style="margin-top:8px">想用快速鍵的話，到 <code>chrome://extensions/shortcuts</code>
-      找 Post Sync 自己綁一組（預設沒有綁，免得跟你慣用的鍵打架）。</p>
+    <p style="margin-top:12px" data-i18n="obStep2Alt"></p>
+    <p style="margin-top:8px" data-i18n="obStep2Hotkey"></p>
   </div>
 
-  <h2>3.（選用）同步到 Focus4ai 知識庫</h2>
+  <h2 data-i18n="obStep3"></h2>
   <div class="card">
-    <p>點工具列的 Post Sync 圖示，打開「同步到 Focus4ai 知識庫」，填站台網址
-      （線上站台是 <code>https://app.focus4ai.com</code>）。</p>
-    <p style="margin-top:8px">Drive 存的是<b>給人看的</b>版本 —— 一篇一份 Doc，圖片直接嵌在裡面。
-      知識庫存的是<b>給檢索用的</b>版本 —— Markdown，收進去就切片建索引，之後問得到。</p>
+    <p data-i18n="obStep3Body"></p>
+    <p style="margin-top:8px" data-i18n="obStep3Why"></p>
   </div>
 
-  <h2>幾件先知道比較好的事</h2>
+  <h2 data-i18n="obKnowTitle"></h2>
   <div class="card warn">
     <ul>
-      <li><b>擷取一律是你自己按的。</b>沒有任何自動收集，也不會自己捲動頁面 ——
-        那會從「使用者閱讀」變成「自動化擷取」，帳號風險完全不同。</li>
-      <li><b>同一篇收第二次會先問你。</b>不是擋掉，是問一聲，並附上先前那份的連結。</li>
-      <li><b>平台改版可能讓抓取失準。</b>選擇器在 <code>src/adapters.js</code>，
-        抓不到內文時畫面上會明講，不會假裝收好了。</li>
-      <li><b>按了沒反應？</b>回到那個分頁按 <code>Cmd+R</code> 重新整理一次 ——
-        擴充需要頁面重新載入才會生效。還是不行就點圖示按「檢查目前分頁」。</li>
+      <li data-i18n="obKnowManual"></li>
+      <li data-i18n="obKnowDup"></li>
+      <li data-i18n="obKnowDrift"></li>
+      <li data-i18n="obKnowNoop"></li>
     </ul>
   </div>
 
 </div>
+<script src="src/i18n.js"></script>
 <script src="src/onboarding.js"></script>
 </body>
 </html>

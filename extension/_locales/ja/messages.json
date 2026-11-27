@@ -1,0 +1,620 @@
+{
+  "appName": {
+    "message": "Post Sync — ソーシャル投稿コレクター"
+  },
+  "appDesc": {
+    "message": "残したい投稿を見つけたらワンクリック。自分の Google Drive に保存し、Focus4ai ナレッジベースへの同期も選べます。Facebook、Threads、X、Instagram、LinkedIn に対応。"
+  },
+  "htmlLang": {
+    "message": "ja"
+  },
+  "cmdCapture": {
+    "message": "現在画面にある投稿を取り込む（既定では未設定。chrome://extensions/shortcuts で割り当てられます）"
+  },
+  "brandTagline": {
+    "message": "残したい投稿までスクロールして、ワンクリック。"
+  },
+  "btnConnectGoogle": {
+    "message": "Google に接続"
+  },
+  "btnReconnect": {
+    "message": "再接続"
+  },
+  "connChecking": {
+    "message": "確認中…"
+  },
+  "connConnected": {
+    "message": "Google Drive に接続済み"
+  },
+  "connNotConnected": {
+    "message": "Google に未接続"
+  },
+  "connNoClientId": {
+    "message": "Drive が未設定（README 参照）"
+  },
+  "connWaiting": {
+    "message": "Google の認証画面を待っています…"
+  },
+  "connDone": {
+    "message": "✅ 接続しました"
+  },
+  "connFailed": {
+    "message": "接続に失敗しました"
+  },
+  "connFailedRetry": {
+    "message": "接続に失敗しました。もう一度お試しください。"
+  },
+  "connNonChrome": {
+    "message": "（Arc、Brave、Edge をお使いの場合、Drive の認証には Chrome 本体が必要です。取り込みとナレッジベース同期には影響しません。）"
+  },
+  "optFloatButton": {
+    "message": "ソーシャルページにフローティングボタンを表示"
+  },
+  "hintRightClick": {
+    "message": "投稿を**右クリックして「⚡ この投稿を取り込む」**を選ぶこともできます。狙った投稿を指定できるので、最も確実です。\nショートカットキーは **chrome://extensions/shortcuts** で自分で割り当ててください。"
+  },
+  "optAlbum": {
+    "message": "アルバム投稿をめくって全画像を取り込む"
+  },
+  "hintAlbum": {
+    "message": "Facebook はアルバム投稿のサムネイルを 5 枚しか配置せず、残りはページ内に存在しません。これをオンにすると、アルバムの取り込み時に**写真ビューアを一時的に開いて**順にめくり、終わると閉じて元の位置に戻ります。\nポップアップウィンドウを開く機能はこれだけです。めくる操作はキーボードで行い、ビューア内のメニューは一切クリックしません。オフにすると、アルバムは最初の 5 枚のみになります。"
+  },
+  "labelProfiles": {
+    "message": "コレクション（それぞれ専用の Drive フォルダ）"
+  },
+  "btnAddProfile": {
+    "message": "コレクションを追加"
+  },
+  "labelFolderName": {
+    "message": "Drive フォルダ名"
+  },
+  "optDriveEnabled": {
+    "message": "Google Drive に書き込む（1 投稿 1 ドキュメント、画像は埋め込み）"
+  },
+  "promptNewProfile": {
+    "message": "新しいコレクションの名前（例：顧客 A、読書、業界ウォッチ）"
+  },
+  "profileAdded": {
+    "message": "追加しました。「設定を保存」を押してください。"
+  },
+  "defaultProfileName": {
+    "message": "個人用"
+  },
+  "defaultFolderName": {
+    "message": "Post Sync 収集した投稿"
+  },
+  "optF4Enabled": {
+    "message": "**Focus4ai ナレッジベースに同期**"
+  },
+  "labelF4Base": {
+    "message": "サイト URL"
+  },
+  "labelF4Folder": {
+    "message": "フォルダ"
+  },
+  "optF4Private": {
+    "message": "local_only として記録（外部モデルに送らない）"
+  },
+  "hintF4Private": {
+    "message": "ソーシャル投稿はほとんどが公開内容なので、既定では**オフ**です。オフだからこそ検索対象に入ります。非公開グループから集めるときにオンにしてください。"
+  },
+  "btnF4Test": {
+    "message": "ナレッジベース接続をテスト"
+  },
+  "optP2sCollect": {
+    "message": "**persona-to-skill のインポートファイルを残す**"
+  },
+  "hintP2sCollect": {
+    "message": "既定ではオフです。オンにすると、**自分で取り込みを押した**投稿の本文がローカルにも残り、persona-to-skill が読む JSON として書き出せます。\n押していないものを取得することはなく、どこかへ送ることもありません。ファイルの保存先は下のボタンで決めます。"
+  },
+  "p2sCountNone": {
+    "message": "ローカルにはまだ何もありません"
+  },
+  "p2sCountSome": {
+    "message": "ローカルに $1 件"
+  },
+  "btnP2sClear": {
+    "message": "消去"
+  },
+  "btnP2sExport": {
+    "message": "インポートファイルを書き出す"
+  },
+  "hintP2sExport": {
+    "message": "書き出したファイルには、ソースの等級と対象人物を**記入しません**。どの投稿が本人自身の言葉で、どれが広報担当や代筆によるものかは機械には判別できないため、この 2 つの判断は利用者に委ねられます。persona-to-skill 自身も推測を禁じています。"
+  },
+  "btnSave": {
+    "message": "設定を保存"
+  },
+  "btnDiag": {
+    "message": "現在のタブを調べる"
+  },
+  "btnClearSeen": {
+    "message": "重複インデックスを消去"
+  },
+  "labelRecentLog": {
+    "message": "最近の書き込み"
+  },
+  "logEmpty": {
+    "message": "まだ投稿を取り込んでいません"
+  },
+  "linkOpen": {
+    "message": "開く ↗"
+  },
+  "obTitle": {
+    "message": "Post Sync — はじめに"
+  },
+  "obStep1": {
+    "message": "1. Google に接続（Drive に保存する場合のみ必要）"
+  },
+  "obStep1Body": {
+    "message": "あなたのコンテンツは**あなた自身の** Drive にのみ保存されます。この拡張機能には独自のサーバーがありません。"
+  },
+  "obStep1Done": {
+    "message": "✅ 接続しました。取り込んだものはすべてあなた自身の Google Drive に保存されます。"
+  },
+  "obStep2": {
+    "message": "2. ソーシャルページで試す"
+  },
+  "obStep2Body": {
+    "message": "下のいずれかのサイトを開き、投稿までスクロールしてください。右側に**「⚡ この投稿を取り込む」**が現れ、その投稿に薄紫の枠が付くので、クリックでどれが取り込まれるか分かります。"
+  },
+  "obColPlatform": {
+    "message": "プラットフォーム"
+  },
+  "obColUrl": {
+    "message": "URL"
+  },
+  "obStep2Alt": {
+    "message": "**または**投稿を右クリックして「⚡ この投稿を取り込む」を選びます。狙った投稿を指定できるので最も確実で、フローティングボタンが出ていないときにも使えます。"
+  },
+  "obStep2Hotkey": {
+    "message": "ショートカットキーを使うには、**chrome://extensions/shortcuts** で Post Sync を見つけて自分で割り当ててください。既定では未設定なので、既に使っているキーと衝突しません。"
+  },
+  "obStep3": {
+    "message": "3.（任意）Focus4ai ナレッジベースに同期"
+  },
+  "obStep3Body": {
+    "message": "ツールバーの Post Sync アイコンをクリックし、「Focus4ai ナレッジベースに同期」をオンにして、サイト URL を入力します（ホスティング版は **https://app.focus4ai.com**）。"
+  },
+  "obStep3Why": {
+    "message": "Drive に入るのは**人が読むための**版です。1 投稿 1 ドキュメントで、画像も埋め込まれます。ナレッジベースに入るのは**検索のための**版です。Markdown で、取り込み時に分割・索引化されるので、後から質問できます。"
+  },
+  "obKnowTitle": {
+    "message": "先に知っておくとよいこと"
+  },
+  "obKnowManual": {
+    "message": "**取り込みはすべて自分で押したものです。**自動収集は一切なく、ページを勝手にスクロールすることもありません。それをすると「人が閲覧している」から「自動収集」に変わり、アカウントのリスクがまるで違ってきます。"
+  },
+  "obKnowDup": {
+    "message": "**同じ投稿を 2 回目に取り込むときは確認します。**ブロックするのではなく、一度尋ねて、以前の分へのリンクを渡します。"
+  },
+  "obKnowDrift": {
+    "message": "**プラットフォームの改修で抽出がずれることがあります。**セレクタは **src/adapters.js** にあり、本文が取れないときは画面上で明示します。取り込めたふりはしません。"
+  },
+  "obKnowNoop": {
+    "message": "**クリックしても反応がない場合**は、そのタブに戻って **Cmd+R**（Windows は **F5**）で再読み込みしてください。拡張機能はページの再読み込み後に有効になります。それでも反応がなければ、アイコンをクリックして「現在のタブを調べる」を押してください。"
+  },
+  "btnCapture": {
+    "message": "⚡ この投稿を取り込む"
+  },
+  "btnCaptureTitle": {
+    "message": "この投稿を Post Sync に保存"
+  },
+  "menuCapture": {
+    "message": "⚡ この投稿を取り込む"
+  },
+  "toastGone": {
+    "message": "❌ その投稿はもう画面上にありません。少しスクロールしてからお試しください。"
+  },
+  "toastExpanding": {
+    "message": "⏳ 全文を展開中…"
+  },
+  "toastNoText": {
+    "message": "❌ この投稿の本文を取得できませんでした（プラットフォームが変更された可能性があります）。"
+  },
+  "toastCarousel": {
+    "message": "⏳ カルーセルをめくって画像を取得中…"
+  },
+  "toastAlbumOpen": {
+    "message": "⏳ アルバム投稿です。めくって画像を取得中…"
+  },
+  "toastAlbumProgress": {
+    "message": "⏳ アルバムをめくって取得中…現在 $1 枚"
+  },
+  "toastPreparing": {
+    "message": "⏳ 書き込み準備中…（$1 文字・画像 $2 枚）"
+  },
+  "toastDone": {
+    "message": "✅ 取り込みました\n$1"
+  },
+  "toastWriteFailed": {
+    "message": "❌ 書き込みに失敗しました：$1"
+  },
+  "toastStaleContext": {
+    "message": "拡張機能が更新されましたが、このタブは古い版につながっています。Cmd+R（Windows は F5）でページを再読み込みしてください。"
+  },
+  "errTimeout3min": {
+    "message": "3 分以上応答がありません"
+  },
+  "errNoResponse": {
+    "message": "応答がありません"
+  },
+  "errUnknown": {
+    "message": "不明なエラー"
+  },
+  "btnOpenDoc": {
+    "message": "ドキュメントを開く ↗"
+  },
+  "dupAsk": {
+    "message": "この投稿は既に取り込み済みです（$1）"
+  },
+  "dupEarlier": {
+    "message": "以前"
+  },
+  "dupOpenPrev": {
+    "message": "既存の分を開く：$1 ↗"
+  },
+  "dupAgain": {
+    "message": "それでも再度取り込む"
+  },
+  "dupCancel": {
+    "message": "やめる"
+  },
+  "stepAuth": {
+    "message": "Google の認証を確認中…"
+  },
+  "stepFolder": {
+    "message": "Drive フォルダを確認中…"
+  },
+  "stepCreateDoc": {
+    "message": "この投稿のドキュメントを作成中（$1 文字）…"
+  },
+  "stepEmbed": {
+    "message": "画像 $1 枚を埋め込み中…"
+  },
+  "stepEmbedOne": {
+    "message": "画像を埋め込み中 $1/$2…"
+  },
+  "stepF4": {
+    "message": "ナレッジベースに同期中…"
+  },
+  "bitDrive": {
+    "message": "Drive「$1」$2"
+  },
+  "bitDriveImgNote": {
+    "message": "（$1）"
+  },
+  "bitDriveFailed": {
+    "message": "Drive 失敗：$1"
+  },
+  "bitDriveOff": {
+    "message": "Drive は無効"
+  },
+  "bitImages": {
+    "message": "画像 $1 枚"
+  },
+  "bitImagesPartial": {
+    "message": "画像 $1/$2"
+  },
+  "bitF4": {
+    "message": "ナレッジベース $1 チャンク"
+  },
+  "bitF4Failed": {
+    "message": "ナレッジベース失敗：$1"
+  },
+  "bitF4Off": {
+    "message": "ナレッジベースは無効"
+  },
+  "logLine": {
+    "message": "$1・$2：$3"
+  },
+  "noAuthor": {
+    "message": "著者不明"
+  },
+  "noTopic": {
+    "message": "無題の投稿"
+  },
+  "docByline": {
+    "message": "$1・$2$3・取り込み日時 $4"
+  },
+  "docNoPermalink": {
+    "message": "（この投稿の固定リンクは取得できませんでした。$1 から取り込み）"
+  },
+  "docFeed": {
+    "message": "フィード"
+  },
+  "docImagesFailed": {
+    "message": "（$1 枚の画像を埋め込めませんでした。以下の URL は数日で失効することが多いです）\n$2"
+  },
+  "errNoTarget": {
+    "message": "Drive も Focus4ai も無効なので、書き込む先がありません。拡張機能のアイコンをクリックしてどちらかを設定してください。"
+  },
+  "errNoClientId": {
+    "message": "Google OAuth の client_id が設定されていません。README の「OAuth」に従って一度設定し、client_id を manifest.json に記入してください。または Drive をオフにして Focus4ai ナレッジベースのみを使ってください。"
+  },
+  "errNeedsChrome": {
+    "message": "Drive の認証には Chrome 本体が必要です。このブラウザ（Arc、Brave、Edge など）は Google アカウント連携を提供していません。取り込みと Focus4ai ナレッジベース同期には影響せず、Drive への書き込みのみ Chrome が必要です。"
+  },
+  "errGoogleAuth": {
+    "message": "Google の認証"
+  },
+  "errTimeoutWhat": {
+    "message": "$1がタイムアウトしました（$2 秒間応答なし）"
+  },
+  "errTimeoutConn": {
+    "message": "接続がタイムアウトしました（$1 秒）：$2"
+  },
+  "errDownload": {
+    "message": "ダウンロードに失敗しました：$1"
+  },
+  "errUpload": {
+    "message": "アップロードに失敗しました：$1"
+  },
+  "errImageTooBig": {
+    "message": "画像が大きすぎます"
+  },
+  "errGoogleApi": {
+    "message": "Google API $1：$2"
+  },
+  "errFolderNotFolder": {
+    "message": "その ID は有効なフォルダではありません（削除された可能性があります）。"
+  },
+  "errFolderNoAccess": {
+    "message": "指定されたフォルダにアクセスできません。この拡張機能は「自分が作成したファイル」の権限しか持っていません。この欄を空にして自動作成させ、その後 Google Drive で好きな場所にドラッグしてください（移動後も動作します）。"
+  },
+  "errBadUrl": {
+    "message": "URL の形式が正しくありません：$1"
+  },
+  "errNoHostPerm": {
+    "message": "$1 へのアクセス権限がありません。拡張機能のアイコンをクリックし、「設定を保存」を押して、Chrome の確認画面で「許可」を選んでください。"
+  },
+  "errNoBase": {
+    "message": "サイト URL が入力されていません"
+  },
+  "errF4Status": {
+    "message": "サイトが $1$2 を返しました"
+  },
+  "errF4Is404": {
+    "message": "（この URL に /api はありません。紹介サイトではなくアプリか確認してください）"
+  },
+  "errF4NotJsonLogin": {
+    "message": "応答が JSON ではありません。通常はログインページへのリダイレクトです。先にこのブラウザでそのサイトにログインしてください。"
+  },
+  "errF4NotJsonShort": {
+    "message": "応答が JSON ではありません（ログインページへのリダイレクトの可能性）"
+  },
+  "errF4NoMarkdown": {
+    "message": "応答に markdown フィールドがありません"
+  },
+  "errF4Write": {
+    "message": "Focus4ai $1：$2"
+  },
+  "errF4WriteFailed": {
+    "message": "書き込み失敗"
+  },
+  "errTooBig8mb": {
+    "message": "8 MB を超えています"
+  },
+  "stepF4Image": {
+    "message": "ナレッジベースに画像を保存中 $1/$2…"
+  },
+  "mdImagesStored": {
+    "message": "- 画像：$1/$2 枚をナレッジベースに保存$3"
+  },
+  "mdImagesSomeFailed": {
+    "message": "（$1 枚失敗：$2）"
+  },
+  "mdImagesCount": {
+    "message": "- 画像：$1 枚"
+  },
+  "mdImagesInDrive": {
+    "message": "- 画像：$1 枚 → [Drive ドキュメントで見る]($2)"
+  },
+  "mdImagesNotStored": {
+    "message": "- 画像：$1 枚（未保存）"
+  },
+  "p2sNote": {
+    "message": "ソースの等級（tier）と対象人物（subject）はインポート時に指定してください。等級は公開形態によって決まり、対象人物は誰を再構成するかによって決まります。どちらもこの拡張機能が知り得ることではありません。"
+  },
+  "mdTags": {
+    "message": "post-sync, ソーシャル投稿"
+  },
+  "mdAuthorLine": {
+    "message": "- 著者：$1・$2$3"
+  },
+  "mdSourceLine": {
+    "message": "- 原文：$1"
+  },
+  "mdNoPermalink": {
+    "message": "（リンクを取得できません）"
+  },
+  "mdCollectedLine": {
+    "message": "- 取り込み：$1"
+  },
+  "docTimeSuffix": {
+    "message": "・$1"
+  },
+  "errF4Unreachable": {
+    "message": "接続できません：$1（URL は正しいですか？サイトは稼働していますか？）"
+  },
+  "msgBadUrlLike": {
+    "message": "❌ URL の形式が正しくありません。https://app.focus4ai.com のような形にしてください。"
+  },
+  "msgNoPerm": {
+    "message": "❌ $1 へのアクセス権限が付与されなかったため、ナレッジベース同期は動作しません。"
+  },
+  "msgF4NeedsBase": {
+    "message": "❌ ナレッジベース同期がオンなので、サイト URL が必要です。"
+  },
+  "msgF4WrongHost": {
+    "message": "❌ focus4ai.com は紹介サイトで API はありません。ホスティング版は https://app.focus4ai.com を入力してください。"
+  },
+  "msgSaved": {
+    "message": "✅ 保存しました"
+  },
+  "msgSavedTestHint": {
+    "message": "✅ 保存しました。「ナレッジベース接続をテスト」を一度押して、書き込めることを確認してください。"
+  },
+  "msgNeedBaseFirst": {
+    "message": "❌ 先にサイト URL を入力してください"
+  },
+  "msgTesting": {
+    "message": "⏳ テスト中…"
+  },
+  "msgTestOk": {
+    "message": "✅ 接続できました。ナレッジベースには現在 $1 件のドキュメントがあります。"
+  },
+  "msgTestFailed": {
+    "message": "テストに失敗しました"
+  },
+  "msgSeenCleared": {
+    "message": "✅ 重複インデックスを消去しました。以前取り込んだ投稿は新規として扱われます。"
+  },
+  "msgP2sExported": {
+    "message": "✅ $1 件を書き出しました：$2"
+  },
+  "msgP2sEmpty": {
+    "message": "❌ ローカルに何も残っていません。上のスイッチをオンにしてから、いくつか投稿を取り込んでください。"
+  },
+  "msgP2sExportFailed": {
+    "message": "書き出しに失敗しました"
+  },
+  "msgP2sCleared": {
+    "message": "✅ インポート用の素材を消去しました"
+  },
+  "msgP2sClearFailed": {
+    "message": "消去に失敗しました"
+  },
+  "diagNoTab": {
+    "message": "❌ 現在のタブが見つかりません"
+  },
+  "diagNoContent": {
+    "message": "❌ このタブに Post Sync がありません（対応プラットフォームではない、またはページの再読み込みが必要です）。"
+  },
+  "diagBuild": {
+    "message": "ビルド：$1"
+  },
+  "diagPlatform": {
+    "message": "プラットフォーム：$1　ページ：$2"
+  },
+  "diagSelector": {
+    "message": "アンカー $1"
+  },
+  "diagPostsFound": {
+    "message": "→ $1 件の投稿を検出"
+  },
+  "diagStructDiffers": {
+    "message": "　⚠️ このページは構造が異なります"
+  },
+  "diagLockedYes": {
+    "message": "現在のロック：あり"
+  },
+  "diagLockedNo": {
+    "message": "現在のロック：なし（少しスクロールしてください）"
+  },
+  "diagFloatOff": {
+    "message": "⚠️ フローティングボタンはオフです"
+  },
+  "diagCandidates": {
+    "message": "このページの候補アンカー："
+  },
+  "diagUnsupported": {
+    "message": "非対応"
+  },
+  "diagProbeRow": {
+    "message": "$1：$2"
+  },
+  "diagEachPost": {
+    "message": "ビューポート $1　検出した各投稿："
+  },
+  "diagActualDom": {
+    "message": "画面中央から上方向の実際の構造："
+  },
+  "diagImages": {
+    "message": "画像：DOM 内に $1 個の <img>、フィルタ後 $2 枚"
+  },
+  "diagMoreOverlay": {
+    "message": "⚠️「$1」のオーバーレイを検出。アルバム投稿です。残りの画像はフィルタされたのではなく、DOM に存在しません。"
+  },
+  "diagPhotoLinks": {
+    "message": "/photo リンク：$1 個　次へボタン：$2"
+  },
+  "diagYes": {
+    "message": "あり"
+  },
+  "diagNo": {
+    "message": "なし"
+  },
+  "diagButtons": {
+    "message": "この投稿内のボタン："
+  },
+  "diagPreview": {
+    "message": "プレビュー：$1"
+  },
+  "diagNoRightClickTarget": {
+    "message": "（右クリックの対象を取得できませんでした）"
+  },
+  "diagNoAttrs": {
+    "message": "（上方 40 階層に識別属性がありません）"
+  },
+  "diagNoCentreEl": {
+    "message": "（画面中央に要素がありません）"
+  },
+  "diagButtonRow": {
+    "message": "「$1」$2×$3"
+  },
+  "diagCentreRow": {
+    "message": "y=$1　$2"
+  },
+  "diagNoText": {
+    "message": "（テキストなし）"
+  },
+  "diagUnrecognised": {
+    "message": "❌ どの投稿か判別できません"
+  },
+  "diagDetectedN": {
+    "message": "・$1 件を検出（属性 $2／シード $3）"
+  },
+  "diagYouClicked": {
+    "message": "・クリックしたのは $1"
+  },
+  "diagAncestry": {
+    "message": "・そこから上方向には：\n$1"
+  },
+  "pickTooShort": {
+    "message": "高さ不足"
+  },
+  "pickAbove": {
+    "message": "ビューポート上方"
+  },
+  "pickBelow": {
+    "message": "ビューポート下方"
+  },
+  "pickInvisible": {
+    "message": "非表示"
+  },
+  "pickOk": {
+    "message": "✅ 対象"
+  },
+  "imgInComments": {
+    "message": "コメント欄の画像"
+  },
+  "imgAvatarAlt": {
+    "message": "アバター（alt による判定）"
+  },
+  "imgAvatarHeader": {
+    "message": "アバター（header 内）"
+  },
+  "imgTooSmall": {
+    "message": "小さすぎる"
+  },
+  "imgLoading": {
+    "message": "[読み込み中]"
+  },
+  "imgNotHttp": {
+    "message": "http(s) の URL ではない"
+  },
+  "imgKept": {
+    "message": "✅ 取得"
+  }
+}

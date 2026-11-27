@@ -11,6 +11,12 @@
 (function () {
   'use strict';
 
+  // 跟 extract.js 同一個理由：檔頭寫了「不碰 chrome.*」，那句話要是真的。
+  // 檔名裡的「未命名貼文」「未署名」是介面文字，所以它回傳代碼，翻譯函式
+  // 由 background.js 注入一次。沒注入就原樣回傳代碼。
+  let tr = (key) => key;
+  function setTranslator(fn) { tr = (typeof fn === 'function') ? fn : ((key) => key); }
+
   // 貼文開頭常常是殼字，不是內容：贊助標記、「XXX 分享了一則貼文」、追蹤鈕
   // 這兩份比對的是頁面上的字，不是介面的字，所以三種語言要同時認得，
   // 不是跟著介面切換。詳見 adapters.js 裡 ACTION_WORDS 上面那段。
@@ -51,13 +57,13 @@
         && s !== timeText
         && !NOISE_LINE.test(s)
         && !TIME_LINE.test(s));
-    return sanitizeName(line || (p && p.text) || '') || '未命名貼文';
+    return sanitizeName(line || (p && p.text) || '') || tr('noTopic');
   }
 
   // 檔名尾巴放發文者，不是平台——平台在資料夾裡一看就知道，
   // 而「這篇是誰寫的」才是之後翻資料夾時真正在找的東西。
   function authorName(p) {
-    return sanitizeName((p && p.author) || '').slice(0, 20) || '未署名';
+    return sanitizeName((p && p.author) || '').slice(0, 20) || tr('noAuthor');
   }
 
   // 檔名的主體。Drive 的 Doc 名稱與知識庫的 .md 檔名共用同一份，
@@ -67,6 +73,7 @@
   }
 
   self.POST_SYNC_NAME = {
+    setTranslator,
     sanitizeName, topicOf, authorName, docStem, NOISE_LINE, TIME_LINE,
   };
 })();

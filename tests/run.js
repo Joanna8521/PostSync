@@ -349,8 +349,10 @@ pinSizes(document.getElementById('fixtures'));
     !topicOf({ text: 'A/B 測試怎麼做才對' }).includes('/'),
     topicOf({ text: 'A/B 測試怎麼做才對' }));
 
+  // naming.js 回傳的是訊息代碼，不是某個語言的字（見那支檔的檔頭：
+  // 它不碰 chrome.*，翻譯函式由 background.js 注入）。所以這裡斷言代碼。
   check('完全沒有可用文字時給得出名字，不是空字串',
-    topicOf({ text: '' }) === '未命名貼文', topicOf({ text: '' }));
+    topicOf({ text: '' }) === 'noTopic', topicOf({ text: '' }));
 
   check('長內文截短到 36 字以內',
     topicOf({ text: '這'.repeat(200) }).length <= 36,
@@ -405,15 +407,24 @@ pinSizes(document.getElementById('fixtures'));
 // ── 檔名 ────────────────────────────────────────────
 {
   group('檔名：日期_主題_發文者');
-  const { docStem, authorName } = self.POST_SYNC_NAME;
+  const { docStem, authorName, topicOf } = self.POST_SYNC_NAME;
 
   const p = { text: '這是貼文的內容第一行\n第二行', author: '林志豪' };
   check('尾巴是發文者，不是平台',
     docStem(p, '20260813') === '20260813_這是貼文的內容第一行_林志豪',
     docStem(p, '20260813'));
   check('沒有作者時給得出名字，不是空的或兩條底線',
-    authorName({}) === '未署名' && !docStem({ text: 'abcd' }, '20260813').includes('__'),
+    authorName({}) === 'noAuthor' && !docStem({ text: 'abcd' }, '20260813').includes('__'),
     docStem({ text: 'abcd' }, '20260813'));
+
+  // 注入的翻譯函式真的有被用到。沒有這一條的話，setTranslator 可以是個
+  // 空函式而上面那兩條照樣綠——代碼永遠等於代碼。
+  self.POST_SYNC_NAME.setTranslator((k) => ({ noTopic: 'ZZ', noAuthor: 'YY' }[k] || k));
+  check('注入的翻譯函式會被用到',
+    topicOf({ text: '' }) === 'ZZ' && authorName({}) === 'YY',
+    [topicOf({ text: '' }), authorName({})]);
+  self.POST_SYNC_NAME.setTranslator(null); // 還原，後面的測試照原樣跑
+  check('傳 null 回到原樣回傳代碼', topicOf({ text: '' }) === 'noTopic', topicOf({ text: '' }));
   check('作者名裡的斜線不會變成 Drive 路徑',
     !docStem({ text: '內容內容', author: 'a/b' }, '20260813').includes('/'),
     docStem({ text: '內容內容', author: 'a/b' }, '20260813'));
@@ -501,6 +512,61 @@ pinSizes(document.getElementById('fixtures'));
   check('24px 的小圖示不收', !imgs.some((u) => u.includes('icon')), imgs);
 
   host.remove();
+}
+
+// ── 介面語言 ────────────────────────────────────────
+// i18n.js 唯一有邏輯的地方是那個標記渲染器：訊息裡的 **粗體** 與換行要組成
+// DOM 節點，而且**不准走 innerHTML**。
+//
+// 那條規矩值得測，因為它很容易在某次「順手改一下」裡消失，而消失之後畫面
+// 看起來一模一樣——粗體照樣是粗的。只有把訊息換成一段 HTML 才看得出差別，
+// 而那時候已經在正式版裡了。
+
+{
+  group('介面語言：標記渲染器');
+  const I = self.POST_SYNC_I18N;
+
+  const render = (s) => I.nodes(s).map((n) => {
+    if (n.nodeType === 3) return n.textContent;
+    return n.tagName === 'BR' ? '<br>' : `<b>${n.textContent}</b>`;
+  }).join('');
+
+  check('純文字就是純文字', render('社群貼文多半是公開內容') === '社群貼文多半是公開內容',
+    render('社群貼文多半是公開內容'));
+  check('中間的粗體', render('預設**不**標記') === '預設<b>不</b>標記', render('預設**不**標記'));
+  check('兩段粗體', render('你**自己按**的**原文**') === '你<b>自己按</b>的<b>原文</b>',
+    render('你**自己按**的**原文**'));
+  check('開頭就粗體', render('**擷取一律是你自己按的。**沒有自動收集')
+    === '<b>擷取一律是你自己按的。</b>沒有自動收集',
+    render('**擷取一律是你自己按的。**沒有自動收集'));
+  check('換行變成 <br>', render('第一行\n第二行') === '第一行<br>第二行',
+    render('第一行\n第二行'));
+  check('粗體與換行混著用',
+    render('也可以**按右鍵**，最不會出錯。\n或到 **shortcuts** 綁一組。')
+    === '也可以<b>按右鍵</b>，最不會出錯。<br>或到 <b>shortcuts</b> 綁一組。',
+    render('也可以**按右鍵**，最不會出錯。\n或到 **shortcuts** 綁一組。'));
+
+  // 這是整支檔存在的理由。訊息裡的 HTML 要變成**看得見的字**，不是標籤。
+  // 走 innerHTML 的話下面這一條會綠——而那正是不能綠的那種綠。
+  const el = document.createElement('div');
+  // payload 刻意不用 onerror=alert()。那個在 innerHTML 版本下會真的彈出
+  // 對話框，然後 headless Chrome 卡住、測試變成逾時而不是紅——卡住比紅糟，
+  // 因為看不出是哪一條壞的。這裡只要能生出節點就夠了。
+  I.setText(el, '這是 <b>標籤</b> 不是粗體 <img src="x">');
+  check('訊息裡的 HTML 原樣當文字顯示，不是解析成節點',
+    el.querySelectorAll('b, img').length === 0
+    && el.textContent.includes('<b>標籤</b>'), el.innerHTML);
+
+  // 同一個元素填第二次要換掉，不是疊上去。popup 重畫會重複呼叫。
+  I.setText(el, '甲');
+  I.setText(el, '乙');
+  check('填第二次是換掉，不是疊上去', el.textContent === '乙', el.textContent);
+
+  // chrome.i18n 不存在的時候（就是現在這個測試環境）回 key 本身。
+  // 那在畫面上看起來很蠢，而這正是要的：漏翻一條要看得見，不能靜靜留白。
+  check('沒有 chrome.i18n 時回 key 本身，不是空字串',
+    I.t('someKeyThatDoesNotExist') === 'someKeyThatDoesNotExist',
+    I.t('someKeyThatDoesNotExist'));
 }
 
 // ── 頁面語言 ────────────────────────────────────────
@@ -654,8 +720,15 @@ pinSizes(document.getElementById('fixtures'));
     !('tier' in file) && !file.records.some((r) => 'tier' in r), Object.keys(file));
   check('不自己猜重建對象（subject）',
     !('subject' in file) && !file.records.some((r) => 'subject' in r), Object.keys(file));
-  check('而且檔案裡講清楚那兩欄要人自己填',
-    /tier/.test(file.note) && /subject/.test(file.note), file.note);
+  // note 的實際字句由 _locales 決定，而「它有講清楚那兩欄」這件事要在
+  // 三種語言下都成立——那是 tools/run_tests.py 在檢查的，JS 這邊只確認
+  // 欄位在、而且注入的翻譯函式有被用到。
+  check('檔案裡有一個 note 欄位', typeof file.note === 'string' && file.note.length > 0,
+    file.note);
+  P.setTranslator((k) => (k === 'p2sNote' ? 'tier 與 subject 要自己填' : k));
+  check('note 走注入的翻譯函式',
+    /tier/.test(P.buildFile([{ text: 'x' }]).note), P.buildFile([{ text: 'x' }]).note);
+  P.setTranslator(null);
 
   check('檔名帶日期時間，不會互相蓋掉',
     P.fileName(new Date(2026, 10, 27, 9, 45)) === 'post-sync-p2s-20261127-0945.json',

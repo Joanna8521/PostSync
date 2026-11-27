@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Post Sync — 社群貼文收藏器",
-  "version": "1.5.0",
-  "description": "滑到想收的社群貼文，按一下就存進你自己的 Google Drive，並可同步進 Focus4ai 知識庫。支援 Facebook / Threads / X / Instagram / LinkedIn。",
+  "name": "__MSG_appName__",
+  "version": "1.6.0",
+  "description": "__MSG_appDesc__",
+  "default_locale": "en",
   "permissions": [
     "storage",
     "identity",
@@ -53,6 +54,7 @@
         "https://www.linkedin.com/*"
       ],
       "js": [
+        "src/i18n.js",
         "src/adapters.js",
         "src/extract.js",
         "src/content.js"
@@ -65,7 +67,7 @@
   ],
   "commands": {
     "capture-post": {
-      "description": "收錄目前畫面上的這則貼文（預設沒有綁鍵，可在 chrome://extensions/shortcuts 自己設）"
+      "description": "__MSG_cmdCapture__"
     }
   },
   "action": {

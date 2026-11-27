@@ -1,0 +1,620 @@
+{
+  "appName": {
+    "message": "Post Sync — social post collector"
+  },
+  "appDesc": {
+    "message": "See a post worth keeping, click once, and it lands in your own Google Drive -- with optional sync to a Focus4ai knowledge base. Works on Facebook, Threads, X, Instagram and LinkedIn."
+  },
+  "htmlLang": {
+    "message": "en"
+  },
+  "cmdCapture": {
+    "message": "Capture the post currently on screen (nothing is bound by default; set a key at chrome://extensions/shortcuts)"
+  },
+  "brandTagline": {
+    "message": "Scroll to a post worth keeping. One click."
+  },
+  "btnConnectGoogle": {
+    "message": "Connect Google"
+  },
+  "btnReconnect": {
+    "message": "Reconnect"
+  },
+  "connChecking": {
+    "message": "Checking..."
+  },
+  "connConnected": {
+    "message": "Connected to Google Drive"
+  },
+  "connNotConnected": {
+    "message": "Not connected to Google"
+  },
+  "connNoClientId": {
+    "message": "Drive not set up (see README)"
+  },
+  "connWaiting": {
+    "message": "Waiting for the Google consent window..."
+  },
+  "connDone": {
+    "message": "✅ Connected"
+  },
+  "connFailed": {
+    "message": "Connection failed"
+  },
+  "connFailedRetry": {
+    "message": "Connection failed. Please try again."
+  },
+  "connNonChrome": {
+    "message": "(On Arc, Brave or Edge, Drive authorisation needs Chrome itself. Capture and knowledge-base sync are unaffected.)"
+  },
+  "optFloatButton": {
+    "message": "Show the floating button on social pages"
+  },
+  "hintRightClick": {
+    "message": "You can also **right-click a post and pick \"⚡ Capture this post\"** -- you point at exactly the one you mean, which is the least error-prone way.\nFor a keyboard shortcut, bind one yourself at **chrome://extensions/shortcuts**."
+  },
+  "optAlbum": {
+    "message": "Page through album posts to collect every image"
+  },
+  "hintAlbum": {
+    "message": "Facebook lays out only 5 thumbnails for an album post; the rest are not in the page at all. With this on, capturing an album **briefly opens the photo viewer** and pages through, then closes it and returns you to where you were.\nThis is the only feature that opens a popup window. Paging goes through the keyboard and it never clicks any menu inside the viewer. Turn it off and an album gives you the first 5 images only."
+  },
+  "labelProfiles": {
+    "message": "Collection (each gets its own Drive folder)"
+  },
+  "btnAddProfile": {
+    "message": "Add a collection"
+  },
+  "labelFolderName": {
+    "message": "Drive folder name"
+  },
+  "optDriveEnabled": {
+    "message": "Write to Google Drive (one Doc per post, images embedded)"
+  },
+  "promptNewProfile": {
+    "message": "Name for the new collection (e.g. Client A, Reading, Industry watch)"
+  },
+  "profileAdded": {
+    "message": "Added. Remember to press Save settings."
+  },
+  "defaultProfileName": {
+    "message": "Personal"
+  },
+  "defaultFolderName": {
+    "message": "Post Sync collected posts"
+  },
+  "optF4Enabled": {
+    "message": "**Sync to a Focus4ai knowledge base**"
+  },
+  "labelF4Base": {
+    "message": "Site URL"
+  },
+  "labelF4Folder": {
+    "message": "Folder"
+  },
+  "optF4Private": {
+    "message": "Mark as local_only (never sent to an external model)"
+  },
+  "hintF4Private": {
+    "message": "Social posts are mostly public, so this is **off** by default -- that is what lets them into retrieval. Turn it on when you are collecting from a private group."
+  },
+  "btnF4Test": {
+    "message": "Test the knowledge-base connection"
+  },
+  "optP2sCollect": {
+    "message": "**Keep a persona-to-skill import file**"
+  },
+  "hintP2sCollect": {
+    "message": "Off by default. With it on, the posts **you press capture on** also keep a copy of their text locally, which exports as the JSON persona-to-skill reads.\nIt never fetches anything you did not press, and it sends nothing anywhere. Where the file lands is decided by the button below."
+  },
+  "p2sCountNone": {
+    "message": "Nothing kept locally yet"
+  },
+  "p2sCountSome": {
+    "message": "$1 kept locally"
+  },
+  "btnP2sClear": {
+    "message": "Clear"
+  },
+  "btnP2sExport": {
+    "message": "Export the import file"
+  },
+  "hintP2sExport": {
+    "message": "The export **does not** fill in source tier or subject. Those two are yours to judge: which posts are the person's own words and which came from a social-media manager or a ghostwriter is not something a machine can see, which is why persona-to-skill forbids itself from guessing."
+  },
+  "btnSave": {
+    "message": "Save settings"
+  },
+  "btnDiag": {
+    "message": "Check the current tab"
+  },
+  "btnClearSeen": {
+    "message": "Clear the duplicate index"
+  },
+  "labelRecentLog": {
+    "message": "Recently written"
+  },
+  "logEmpty": {
+    "message": "No posts collected yet"
+  },
+  "linkOpen": {
+    "message": "Open ↗"
+  },
+  "obTitle": {
+    "message": "Post Sync — getting started"
+  },
+  "obStep1": {
+    "message": "1. Connect Google (only needed for saving to Drive)"
+  },
+  "obStep1Body": {
+    "message": "Your content only ever lands in **your own** Drive. This extension has no server of its own."
+  },
+  "obStep1Done": {
+    "message": "✅ Connected. Everything you collect lands in your own Google Drive."
+  },
+  "obStep2": {
+    "message": "2. Try it on a social page"
+  },
+  "obStep2Body": {
+    "message": "Open any of the sites below and scroll to a post. **\"⚡ Capture this\"** floats in on its right, and that post gets a pale violet outline so you can see which one a click would take."
+  },
+  "obColPlatform": {
+    "message": "Platform"
+  },
+  "obColUrl": {
+    "message": "URL"
+  },
+  "obStep2Alt": {
+    "message": "**Or** right-click a post and pick \"⚡ Capture this post\". You point at exactly the one you mean, which is the least error-prone way, and it still works when the floating button has not appeared."
+  },
+  "obStep2Hotkey": {
+    "message": "For a keyboard shortcut, find Post Sync at **chrome://extensions/shortcuts** and bind one yourself. Nothing is bound by default, so it will not fight a shortcut you already use."
+  },
+  "obStep3": {
+    "message": "3. (Optional) sync to a Focus4ai knowledge base"
+  },
+  "obStep3Body": {
+    "message": "Click the Post Sync icon in the toolbar, turn on \"Sync to a Focus4ai knowledge base\", and fill in the site URL (the hosted site is **https://app.focus4ai.com**)."
+  },
+  "obStep3Why": {
+    "message": "Drive holds the version **for people to read**: one Doc per post, images embedded. The knowledge base holds the version **for retrieval**: Markdown, chunked and indexed on arrival so you can ask about it later."
+  },
+  "obKnowTitle": {
+    "message": "A few things worth knowing up front"
+  },
+  "obKnowManual": {
+    "message": "**Every capture is one you pressed.** There is no automatic collection and it never scrolls the page for you. That would turn \"a person reading\" into \"automated scraping\", and the account risk is not remotely the same."
+  },
+  "obKnowDup": {
+    "message": "**Capturing the same post twice asks you first.** It does not block you -- it asks, and hands you a link to the earlier copy."
+  },
+  "obKnowDrift": {
+    "message": "**A platform redesign can throw the extraction off.** The selectors live in **src/adapters.js**, and when the body text cannot be found it says so on screen rather than pretending it collected something."
+  },
+  "obKnowNoop": {
+    "message": "**Nothing happened when you clicked?** Go back to that tab and reload it with **Cmd+R** (**F5** on Windows). The extension needs the page to load again before it takes effect. Still nothing: click the icon and press \"Check the current tab\"."
+  },
+  "btnCapture": {
+    "message": "⚡ Capture this"
+  },
+  "btnCaptureTitle": {
+    "message": "Save this post to Post Sync"
+  },
+  "menuCapture": {
+    "message": "⚡ Capture this post"
+  },
+  "toastGone": {
+    "message": "❌ That post is no longer on screen. Scroll a little and try again."
+  },
+  "toastExpanding": {
+    "message": "⏳ Expanding the full text..."
+  },
+  "toastNoText": {
+    "message": "❌ Could not read this post's body text (the platform may have changed)."
+  },
+  "toastCarousel": {
+    "message": "⏳ Paging through the carousel for images..."
+  },
+  "toastAlbumOpen": {
+    "message": "⏳ This is an album post. Paging through for images..."
+  },
+  "toastAlbumProgress": {
+    "message": "⏳ Paging through the album... $1 so far"
+  },
+  "toastPreparing": {
+    "message": "⏳ Getting ready to write... ($1 characters, $2 images)"
+  },
+  "toastDone": {
+    "message": "✅ Collected\n$1"
+  },
+  "toastWriteFailed": {
+    "message": "❌ Write failed: $1"
+  },
+  "toastStaleContext": {
+    "message": "The extension just updated and this tab is still on the old copy. Reload the page with Cmd+R (F5 on Windows)."
+  },
+  "errTimeout3min": {
+    "message": "No response for over three minutes"
+  },
+  "errNoResponse": {
+    "message": "No response"
+  },
+  "errUnknown": {
+    "message": "Unknown error"
+  },
+  "btnOpenDoc": {
+    "message": "Open the Doc ↗"
+  },
+  "dupAsk": {
+    "message": "You have collected this one already ($1)"
+  },
+  "dupEarlier": {
+    "message": "earlier"
+  },
+  "dupOpenPrev": {
+    "message": "Open the copy you have: $1 ↗"
+  },
+  "dupAgain": {
+    "message": "Collect it again anyway"
+  },
+  "dupCancel": {
+    "message": "Never mind"
+  },
+  "stepAuth": {
+    "message": "Checking Google authorisation..."
+  },
+  "stepFolder": {
+    "message": "Checking the Drive folder..."
+  },
+  "stepCreateDoc": {
+    "message": "Creating the Doc for this post ($1 characters)..."
+  },
+  "stepEmbed": {
+    "message": "Embedding $1 images..."
+  },
+  "stepEmbedOne": {
+    "message": "Embedding image $1 of $2..."
+  },
+  "stepF4": {
+    "message": "Syncing to the knowledge base..."
+  },
+  "bitDrive": {
+    "message": "Drive \"$1\" $2"
+  },
+  "bitDriveImgNote": {
+    "message": " ($1)"
+  },
+  "bitDriveFailed": {
+    "message": "Drive failed: $1"
+  },
+  "bitDriveOff": {
+    "message": "Drive is off"
+  },
+  "bitImages": {
+    "message": "$1 images"
+  },
+  "bitImagesPartial": {
+    "message": "$1 of $2 images"
+  },
+  "bitF4": {
+    "message": "Knowledge base: $1 chunks"
+  },
+  "bitF4Failed": {
+    "message": "Knowledge base failed: $1"
+  },
+  "bitF4Off": {
+    "message": "Knowledge base is off"
+  },
+  "logLine": {
+    "message": "$1 - $2: $3"
+  },
+  "noAuthor": {
+    "message": "Unattributed"
+  },
+  "noTopic": {
+    "message": "Untitled post"
+  },
+  "docByline": {
+    "message": "$1 - $2$3 - collected $4"
+  },
+  "docNoPermalink": {
+    "message": "(No permalink was available for this post; collected from $1)"
+  },
+  "docFeed": {
+    "message": "the feed"
+  },
+  "docImagesFailed": {
+    "message": "($1 images could not be embedded. These URLs usually stop working within days.)\n$2"
+  },
+  "errNoTarget": {
+    "message": "Neither Drive nor Focus4ai is on, so there is nowhere to write. Click the extension icon and set one of them up."
+  },
+  "errNoClientId": {
+    "message": "No Google OAuth client_id is set. Follow \"OAuth\" in the README once and put the client_id into manifest.json, or turn Drive off for now and use the Focus4ai knowledge base alone."
+  },
+  "errNeedsChrome": {
+    "message": "Drive authorisation needs Chrome itself: this browser (Arc, Brave, Edge and so on) does not provide Google account integration. Capture and Focus4ai knowledge-base sync are unaffected -- only writing to Drive needs Chrome."
+  },
+  "errGoogleAuth": {
+    "message": "Google authorisation"
+  },
+  "errTimeoutWhat": {
+    "message": "$1 timed out ($2 seconds with no response)"
+  },
+  "errTimeoutConn": {
+    "message": "Connection timed out ($1 seconds): $2"
+  },
+  "errDownload": {
+    "message": "Download failed: $1"
+  },
+  "errUpload": {
+    "message": "Upload failed: $1"
+  },
+  "errImageTooBig": {
+    "message": "Image too large"
+  },
+  "errGoogleApi": {
+    "message": "Google API $1: $2"
+  },
+  "errFolderNotFolder": {
+    "message": "That ID is not a valid folder (it may have been deleted)."
+  },
+  "errFolderNoAccess": {
+    "message": "Cannot reach the folder you specified. This extension only has permission for files it created itself. Clear the field so it creates one, then drag that folder wherever you want it in Google Drive -- it keeps working after the move."
+  },
+  "errBadUrl": {
+    "message": "That is not a valid URL: $1"
+  },
+  "errNoHostPerm": {
+    "message": "Missing permission to reach $1. Click the extension icon, press Save settings, then Allow in the Chrome prompt."
+  },
+  "errNoBase": {
+    "message": "No site URL was filled in"
+  },
+  "errF4Status": {
+    "message": "The site returned $1$2"
+  },
+  "errF4Is404": {
+    "message": " (there is no /api at this URL -- check it is the app, not the marketing site)"
+  },
+  "errF4NotJsonLogin": {
+    "message": "The response was not JSON, which usually means a redirect to the login page. Sign in to that site in this browser first."
+  },
+  "errF4NotJsonShort": {
+    "message": "The response was not JSON (possibly a redirect to the login page)"
+  },
+  "errF4NoMarkdown": {
+    "message": "The response has no markdown field"
+  },
+  "errF4Write": {
+    "message": "Focus4ai $1: $2"
+  },
+  "errF4WriteFailed": {
+    "message": "write failed"
+  },
+  "errTooBig8mb": {
+    "message": "larger than 8 MB"
+  },
+  "stepF4Image": {
+    "message": "Storing image $1 of $2 in the knowledge base..."
+  },
+  "mdImagesStored": {
+    "message": "- Images: $1 of $2 stored in the knowledge base$3"
+  },
+  "mdImagesSomeFailed": {
+    "message": " ($1 failed: $2)"
+  },
+  "mdImagesCount": {
+    "message": "- Images: $1"
+  },
+  "mdImagesInDrive": {
+    "message": "- Images: $1 -> [see them in the Drive Doc]($2)"
+  },
+  "mdImagesNotStored": {
+    "message": "- Images: $1 (not stored)"
+  },
+  "p2sNote": {
+    "message": "Source tier and subject are to be set at import time: the tier depends on the form of publication and the subject depends on who you are reconstructing, and neither is something this extension knows."
+  },
+  "mdTags": {
+    "message": "post-sync, social-post"
+  },
+  "mdAuthorLine": {
+    "message": "- Author: $1 - $2$3"
+  },
+  "mdSourceLine": {
+    "message": "- Source: $1"
+  },
+  "mdNoPermalink": {
+    "message": "(no permalink available)"
+  },
+  "mdCollectedLine": {
+    "message": "- Collected: $1"
+  },
+  "docTimeSuffix": {
+    "message": " - $1"
+  },
+  "errF4Unreachable": {
+    "message": "Cannot reach it: $1 (is the URL right? is the site running?)"
+  },
+  "msgBadUrlLike": {
+    "message": "❌ That is not a valid URL. It should look like https://app.focus4ai.com"
+  },
+  "msgNoPerm": {
+    "message": "❌ Permission to reach $1 was not granted, so knowledge-base sync will not work."
+  },
+  "msgF4NeedsBase": {
+    "message": "❌ Knowledge-base sync is on, so the site URL is required."
+  },
+  "msgF4WrongHost": {
+    "message": "❌ focus4ai.com is the marketing site and has no API. For the hosted site, use https://app.focus4ai.com"
+  },
+  "msgSaved": {
+    "message": "✅ Saved"
+  },
+  "msgSavedTestHint": {
+    "message": "✅ Saved. Press \"Test the knowledge-base connection\" once to confirm it can write."
+  },
+  "msgNeedBaseFirst": {
+    "message": "❌ Fill in the site URL first"
+  },
+  "msgTesting": {
+    "message": "⏳ Testing..."
+  },
+  "msgTestOk": {
+    "message": "✅ Reachable. The knowledge base currently holds $1 documents."
+  },
+  "msgTestFailed": {
+    "message": "Test failed"
+  },
+  "msgSeenCleared": {
+    "message": "✅ Duplicate index cleared. Posts you collected before will count as new."
+  },
+  "msgP2sExported": {
+    "message": "✅ Exported $1 posts: $2"
+  },
+  "msgP2sEmpty": {
+    "message": "❌ Nothing is kept locally. Turn on the switch above, then go and capture a few posts."
+  },
+  "msgP2sExportFailed": {
+    "message": "Export failed"
+  },
+  "msgP2sCleared": {
+    "message": "✅ The import material has been cleared"
+  },
+  "msgP2sClearFailed": {
+    "message": "Clearing failed"
+  },
+  "diagNoTab": {
+    "message": "❌ Cannot find the current tab"
+  },
+  "diagNoContent": {
+    "message": "❌ Post Sync is not in this tab (not a supported platform, or the page needs a reload)."
+  },
+  "diagBuild": {
+    "message": "Build: $1"
+  },
+  "diagPlatform": {
+    "message": "Platform: $1   Page: $2"
+  },
+  "diagSelector": {
+    "message": "Anchor $1"
+  },
+  "diagPostsFound": {
+    "message": "→ Found $1 posts"
+  },
+  "diagStructDiffers": {
+    "message": "   ⚠️ This page is built differently"
+  },
+  "diagLockedYes": {
+    "message": "Currently locked on: yes"
+  },
+  "diagLockedNo": {
+    "message": "Currently locked on: none (scroll a little)"
+  },
+  "diagFloatOff": {
+    "message": "⚠️ The floating button is off"
+  },
+  "diagCandidates": {
+    "message": "Candidate anchors on this page:"
+  },
+  "diagUnsupported": {
+    "message": "not supported"
+  },
+  "diagProbeRow": {
+    "message": "$1: $2"
+  },
+  "diagEachPost": {
+    "message": "Viewport $1   every post found:"
+  },
+  "diagActualDom": {
+    "message": "The actual structure upward from the centre of the screen:"
+  },
+  "diagImages": {
+    "message": "Images: $1 <img> in the DOM, $2 kept after filtering"
+  },
+  "diagMoreOverlay": {
+    "message": "⚠️ Saw a \"$1\" overlay. This is an album post -- the remaining images are not in the DOM at all, rather than filtered out."
+  },
+  "diagPhotoLinks": {
+    "message": "/photo links: $1   next button: $2"
+  },
+  "diagYes": {
+    "message": "yes"
+  },
+  "diagNo": {
+    "message": "no"
+  },
+  "diagButtons": {
+    "message": "Buttons inside this post:"
+  },
+  "diagPreview": {
+    "message": "Preview: $1"
+  },
+  "diagNoRightClickTarget": {
+    "message": "(no right-click target was captured)"
+  },
+  "diagNoAttrs": {
+    "message": "(no identifying attribute in 40 levels upward)"
+  },
+  "diagNoCentreEl": {
+    "message": "(no element at the centre of the screen)"
+  },
+  "diagButtonRow": {
+    "message": "\"$1\" $2x$3"
+  },
+  "diagCentreRow": {
+    "message": "y=$1   $2"
+  },
+  "diagNoText": {
+    "message": "(no text)"
+  },
+  "diagUnrecognised": {
+    "message": "❌ Cannot tell which post this is"
+  },
+  "diagDetectedN": {
+    "message": "- Found $1 (attribute $2 / seed $3)"
+  },
+  "diagYouClicked": {
+    "message": "- You clicked $1"
+  },
+  "diagAncestry": {
+    "message": "- Upward from there:\n$1"
+  },
+  "pickTooShort": {
+    "message": "too short"
+  },
+  "pickAbove": {
+    "message": "above the viewport"
+  },
+  "pickBelow": {
+    "message": "below the viewport"
+  },
+  "pickInvisible": {
+    "message": "not visible"
+  },
+  "pickOk": {
+    "message": "✅ eligible"
+  },
+  "imgInComments": {
+    "message": "image in the comments"
+  },
+  "imgAvatarAlt": {
+    "message": "avatar (by alt)"
+  },
+  "imgAvatarHeader": {
+    "message": "avatar (inside the header)"
+  },
+  "imgTooSmall": {
+    "message": "too small"
+  },
+  "imgLoading": {
+    "message": "[loading]"
+  },
+  "imgNotHttp": {
+    "message": "not an http(s) URL"
+  },
+  "imgKept": {
+    "message": "✅ kept"
+  }
+}

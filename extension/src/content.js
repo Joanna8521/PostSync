@@ -14,6 +14,12 @@
 
   const NS = self.POST_SYNC;
   const EX = self.POST_SYNC_EXTRACT; // 抽取層，見 src/extract.js
+  // 介面文字走 _locales。頁面上的字不走——那是另一條軸，見 adapters.js
+  // 裡 ACTION_WORDS 上面那段。
+  const T = self.POST_SYNC_I18N.t;
+  // 抽取層回傳的是訊息代碼，翻譯函式要注入一次。不注入的話診斷輸出會
+  // 印出 imgAvatarAlt 這種東西——看得見，而那正是要的：漏接要看得出來。
+  if (EX.setTranslator) EX.setTranslator(T);
   // POST_SYNC_HOST 只有 tests/live.html 會設：file:// 的 location.hostname 是
   // 空字串，不給接縫的話測試頁永遠走不到這一行以下。正式環境沒有人設它。
   const ad = NS && NS.adapterFor(self.POST_SYNC_HOST || location.hostname);
@@ -68,10 +74,10 @@
   // 「偵測到 N 則但一則都沒鎖定」時，唯一有用的資訊就是這個——
   // 只給總數的話完全看不出是太矮、在畫面外、還是別的。
   function rejectReason(r) {
-    if (r.height < 80) return '太矮';           // 佔位或廣告殼
-    if (r.bottom < 60) return '在視窗上方';
-    if (r.top > window.innerHeight - 40) return '在視窗下方';
-    if (Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0) <= 0) return '不可見';
+    if (r.height < 80) return T('pickTooShort');   // 佔位或廣告殼
+    if (r.bottom < 60) return T('pickAbove');
+    if (r.top > window.innerHeight - 40) return T('pickBelow');
+    if (Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0) <= 0) return T('pickInvisible');
     return '';
   }
 
@@ -96,7 +102,7 @@
   function pickReport() {
     return posts.slice(0, 12).map((el, i) => {
       const r = el.getBoundingClientRect();
-      const why = rejectReason(r) || '✅ 合格';
+      const why = rejectReason(r) || T('pickOk');
       return `  #${i} top=${Math.round(r.top)} h=${Math.round(r.height)}`
         + ` ${describe(el)} → ${why}`;
     });
@@ -122,8 +128,8 @@
     btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'postsync-btn';
-    btn.textContent = '⚡ 收這篇';
-    btn.title = '把這則貼文存進 Post Sync';
+    btn.textContent = T('btnCapture');
+    btn.title = T('btnCaptureTitle');
     btn.addEventListener('click', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -491,40 +497,40 @@
   async function capture(root, force) {
     if (busy) return;
     if (!root || !document.contains(root)) {
-      toast('❌ 這一則已經不在畫面上了，捲一下再試', null, 5000);
+      toast(T('toastGone'), null, 5000);
       return;
     }
     busy = true;
     if (btn) btn.disabled = true;
     try {
-      toast('⏳ 展開全文…', null, 0, true);
+      toast(T('toastExpanding'), null, 0, true);
       await expandAll(root);
 
       // 內文一定要先抽完再碰相簿：打開相片檢視器可能讓整頁換掉，
       // 那時 root 就失效了，再抽會抽到空的。
       const data = EX.extract(ad, root);
       if (!data.text || data.text.length < 5) {
-        toast('❌ 抓不到這一則的內文（平台可能改版了）', null, 8000);
+        toast(T('toastNoText'), null, 8000);
         return;
       }
 
       if (ad.next) {
-        toast('⏳ 翻過輪播收圖…', null, 0, true);
+        toast(T('toastCarousel'), null, 0, true);
         data.images = await collectCarousel(root);
       }
 
       // 相簿型貼文：縮圖只鋪 5 張，其餘要打開檢視器才拿得到
       if (albumEnabled && isAlbum(root)) {
-        toast('⏳ 這是相簿貼文，翻頁收圖中…', null, 0, true);
+        toast(T('toastAlbumOpen'), null, 0, true);
         const more = await collectAlbum(root, (n) => {
-          toast(`⏳ 翻相簿收圖…已收 ${n} 張`, null, 0, true);
+          toast(T('toastAlbumProgress', String(n)), null, 0, true);
         });
         // 檢視器裡的大圖畫質比縮圖好，排前面
         data.images = [...new Set([...more, ...data.images])].slice(0, 30);
       }
       await send(data, force);
     } catch (e) {
-      toast(`❌ ${(e && e.message) || '未知錯誤'}`, null, 8000);
+      toast(`❌ ${(e && e.message) || T('errUnknown')}`, null, 8000);
     } finally {
       busy = false;
       if (btn) btn.disabled = false;
@@ -544,13 +550,13 @@
     }
   }
 
-  const DEAD_MSG = '擴充剛剛更新過，這個分頁還連著舊版。按 Cmd+R（Windows 是 F5）重新整理這一頁就好。';
+  const DEAD_MSG = T('toastStaleContext');
 
   function sendOne(data, force) {
     return new Promise((resolve) => {
       if (!extAlive()) return resolve({ ok: false, error: DEAD_MSG });
       const wd = setTimeout(
-        () => resolve({ ok: false, error: '超過三分鐘沒有回應' }),
+        () => resolve({ ok: false, error: T('errTimeout3min') }),
         180000,
       );
       chrome.runtime.sendMessage(
@@ -560,7 +566,7 @@
           if (chrome.runtime.lastError) {
             return resolve({ ok: false, error: chrome.runtime.lastError.message });
           }
-          resolve(res || { ok: false, error: '沒有回應' });
+          resolve(res || { ok: false, error: T('errNoResponse') });
         },
       );
     });
@@ -568,7 +574,7 @@
 
   function send(data, force) {
     return new Promise((resolve) => {
-      toast(`⏳ 準備寫入…（${data.text.length.toLocaleString()} 字・${data.images.length} 張圖）`, null, 0, true);
+      toast(T('toastPreparing', [data.text.length.toLocaleString(), String(data.images.length)]), null, 0, true);
       sendOne(data, force).then((res) => {
         if (res && res.error && !res.dup && !res.ok) {
           toast(`❌ ${res.error}`, null, 10000);
@@ -582,10 +588,10 @@
           // 訊息由 background 組好，這裡只負責顯示。
           // 成功的訊息看過就好，不要一直杵在畫面上擋東西；
           // 想點「開啟 Doc」的話滑鼠移過去就會停止倒數。
-          toast(`✅ 已收錄\n${(res.bits || []).join('\n')}`,
+          toast(T('toastDone', (res.bits || []).join('\n')),
             res.drive && res.drive.docUrl, 6000);
         } else {
-          toast(`❌ 寫入失敗：${(res && res.error) || '未知錯誤'}`, null, 10000);
+          toast(T('toastWriteFailed', (res && res.error) || T('errUnknown')), null, 10000);
         }
         resolve();
       });
@@ -636,7 +642,7 @@
   }
 
   function describe(el) {
-    if (!el || !el.tagName) return '（沒抓到右鍵的目標）';
+    if (!el || !el.tagName) return T('diagNoRightClickTarget');
     const bits = [`<${el.tagName.toLowerCase()}>`];
     for (const a of TELL_ATTRS) {
       const v = el.getAttribute(a);
@@ -662,7 +668,7 @@
       cur = cur.parentElement;
       depth++;
     }
-    return out.length ? out : ['  （往上 40 層都沒有任何辨識屬性）'];
+    return out.length ? out : ['  ' + T('diagNoAttrs')];
   }
 
   // ── 訊息 ──────────────────────────────────────────
@@ -680,11 +686,11 @@
         refreshPosts();
         const c = EX.outermost.lastCounts;
         toast(
-          `❌ 認不出這是哪一則貼文\n`
-          + `・偵測到 ${posts.length} 則`
-          + (c ? `（屬性 ${c.attr}／種子 ${c.seed}）` : '') + '\n'
-          + `・你點的是 ${describe(lastRightClicked)}\n`
-          + `・往上這條路上有：\n${ancestry(lastRightClicked).join('\n')}`,
+          T('diagUnrecognised') + '\n'
+          + T('diagDetectedN', [String(posts.length),
+                                c ? String(c.attr) : '?', c ? String(c.seed) : '?']) + '\n'
+          + T('diagYouClicked', describe(lastRightClicked)) + '\n'
+          + T('diagAncestry', ancestry(lastRightClicked).join('\n')),
           null, 120000,
         );
       }
@@ -756,7 +762,8 @@
       const r = b.getBoundingClientRect();
       const l = (b.getAttribute('aria-label') || b.textContent || '')
         .replace(/\s+/g, ' ').trim().slice(0, 20);
-      return l ? `  「${l}」${Math.round(r.width)}×${Math.round(r.height)}` : '';
+      return l ? '  ' + T('diagButtonRow',
+        [l, String(Math.round(r.width)), String(Math.round(r.height))]) : '';
     }).filter(Boolean).slice(0, 16);
 
     return {
@@ -779,7 +786,7 @@
     'role=feed': '[role="feed"]',
     'aria-posinset': '[aria-posinset]',
     'data-pagelet=Feed*': '[data-pagelet^="Feed"]',
-    'article 標籤': 'article',
+    article: 'article',
     'data-ad-preview': '[data-ad-preview]',
     'aria-describedby': '[aria-describedby][aria-labelledby]',
     ...(ad.probes || {}),
@@ -799,11 +806,12 @@
         window.innerHeight * frac)));
       const el = document.elementFromPoint(x, y);
       if (!el || (panelHas && panelHas(el))) continue;
-      out.push(`y=${y}　${(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24) || '（無文字）'}`);
+      const txt = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+      out.push(T('diagCentreRow', [String(y), txt || T('diagNoText')]));
       out.push(...ancestry(el, 8));
       out.push('');
     }
-    return out.length ? out : ['（畫面中央取不到元素）'];
+    return out.length ? out : [T('diagNoCentreEl')];
   }
 
   // 取樣時要跳過自己畫的東西，不然量到的是我們自己的 UI
@@ -840,7 +848,7 @@
     if (url) {
       const a = document.createElement('a');
       a.className = 'postsync-link';
-      a.textContent = '開啟 Doc ↗';
+      a.textContent = T('btnOpenDoc');
       a.href = url;
       a.target = '_blank';
       a.rel = 'noopener';
@@ -883,13 +891,13 @@
 
     const span = document.createElement('span');
     span.className = 'postsync-status-text';
-    span.textContent = `這篇已經收過了（${prev && prev.when ? prev.when : '先前'}）`;
+    span.textContent = T('dupAsk', prev && prev.when ? prev.when : T('dupEarlier'));
     el.appendChild(span);
 
     if (prev && prev.docUrl) {
       const a = document.createElement('a');
       a.className = 'postsync-link';
-      a.textContent = `開啟已收的那份：${prev.docName || 'Doc'} ↗`;
+      a.textContent = T('dupOpenPrev', prev.docName || 'Doc');
       a.href = prev.docUrl;
       a.target = '_blank';
       a.rel = 'noopener';
@@ -902,7 +910,7 @@
     const again = document.createElement('button');
     again.type = 'button';
     again.className = 'postsync-mini postsync-mini-primary';
-    again.textContent = '仍要再收一次';
+    again.textContent = T('dupAgain');
     again.addEventListener('click', () => {
       el.remove();
       statusEl = null;
@@ -912,7 +920,7 @@
     const skip = document.createElement('button');
     skip.type = 'button';
     skip.className = 'postsync-mini';
-    skip.textContent = '算了';
+    skip.textContent = T('dupCancel');
     skip.addEventListener('click', () => {
       el.remove();
       statusEl = null;
