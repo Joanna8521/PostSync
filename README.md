@@ -1,5 +1,7 @@
 [English](README.en.md) · **繁體中文** · [日本語](README.ja.md)
 
+[![CI](https://github.com/Joanna8521/PostSync/actions/workflows/ci.yml/badge.svg)](https://github.com/Joanna8521/PostSync/actions/workflows/ci.yml)
+
 # ⚡ Post Sync — 社群貼文收藏器
 
 開源的 Chrome 擴充功能。在 **Facebook / Threads / X / Instagram / LinkedIn**
@@ -227,6 +229,40 @@ Post Sync 剛好就是它文件裡說的那條路：使用者自己按、跑在�
 
 圖片不進匯入檔，只留 `image_count`。對面做的是文字方法論重建，而且它明文
 拒絕產出肖像類的東西。
+
+## CI
+
+```yaml
+tests                                    # 原始碼掃描、五道多語言檢查、README 檢查、絕對路徑掃描、142 項測試、權限涵蓋度、打包
+every gate rejects a broken input        # 七道閘門各弄壞一次，必須全部變紅
+both pages render in all three languages # 真瀏覽器渲染 popup 與 onboarding ×3 語
+```
+
+第二個 job 值得解釋，因為它的第一版**自己就是一道假閘門**。
+
+它要證明的是「這些檢查真的會擋」，做法是把每一樣東西故意弄壞一次，然後要求
+那一次必須紅。第一版用 `cp -r extension tools /tmp/snap_1` 做快照 —— 兩個來源
+加一個不存在的目的地，cp 直接失敗。於是快照從來沒存在過，而還原那一步的
+`rm -rf extension tools` 把真的目錄刪掉。
+
+從那之後整個樹裡沒有任何原始碼。第一項之後的每一項都「紅」了，因為檔案不見
+了；job 把每一項算成通過，然後 **exit 0**。一個專門用來抓「閘門失效」的 job，
+自己變成了其中一個。
+
+兩件事修掉它。還原改走 `git`，它不會像 cp 那樣半成功。而且每一項在弄壞之前
+**先確認基準線是綠的** —— 一個紅的結果只有在同一道指令前一刻是綠的時候才
+有意義。最後再確認工作區乾淨，因為殘留的修改代表有一次還原沒生效，而那正是
+第一版藏住自己失敗的方式。
+
+另外兩個破壞指令本身也壞過：
+
+| 弄壞什麼 | 第一版的問題 |
+|---|---|
+| 塞一個字面的不可見字元 | `printf "\u200b"` 要穿過 YAML、shell、`bash -c`、printf 四層，本機跑兩次結果不一樣：一次是字元、一次是六個字母。改用 Python 從碼位寫 |
+| 用一個目錄沒有的 key | 原本改 `t('btnSave')`，而 `btnSave` 只在 `popup.html` 的 `data-i18n` 裡，`popup.js` 從來沒叫它。sed 沒命中，檢查照樣綠 |
+| 寫死的絕對路徑 | `tools/check_i18n_render.js` 第一版寫了 `/home/user/postsync/extension`，也就是寫它的那台機器。本機跑得過，CI 第一次跑就 ENOENT，報的是一個根本不在這個 repo 裡的路徑。現在有一道掃描擋這一類 |
+
+**一個不會真的壞掉的破壞，比沒有這個檢查更糟。**
 
 ## 專案結構
 

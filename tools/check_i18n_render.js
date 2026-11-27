@@ -15,7 +15,12 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const EXT = '/home/user/postsync/extension';
+// Relative to this file, never an absolute path. The first version had
+// '/home/user/postsync/extension' hardcoded, which is the machine it was
+// written on. It passed locally because that path existed there, and CI
+// failed on the first run with ENOENT on a path that is not in the
+// repository at all.
+const EXT = path.join(__dirname, '..', 'extension');
 
 (async () => {
   const browser = await chromium.launch();

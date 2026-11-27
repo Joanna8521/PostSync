@@ -119,20 +119,38 @@ def main() -> None:
     check("使用者自填的站台", OPTIONAL, opt_perms,
           "　※ 安裝時不索取，儲存設定當下才要")
 
-    # 反向檢查：宣告了卻沒有任何程式會用到的權限，是多要的
+    # 反向檢查：宣告了卻沒有任何程式會用到的權限，是多要的。
+    #
+    # 這一段原本只印警告，不動 bad，所以它印完警告之後照樣印
+    # 「✅ 全部通過」並 exit 0——而且下面那句「（沒有輸出＝每一條都有用途）」
+    # 是無條件印的，於是剛印完一條警告就緊接著說每一條都有用途，自己打自己。
+    #
+    # 一個沒人會讀的警告不是檢查。多要權限要嘛值得擋，要嘛不值得印；既然
+    # README 把它跟另外兩項並列成「這支腳本會查的三件事」，那它就該擋。
+    # 真的需要先宣告、程式還沒接上的那種情況，正確做法是先不宣告——那也正是
+    # 這段輸出在講的話。
     print("\n=== 有沒有多要權限 ===")
     all_urls = [u for _, u in CONTENT + BACKGROUND]
+    extra = 0
     for p in host_perms:
         if not any(matches(p, u) for u in all_urls):
-            print(f"  ⚠️  {p} 沒有對應到任何已知用途（多要的權限會拖慢商店審查）")
+            extra += 1
+            print(f"  ❌ {p} 沒有對應到任何已知用途（多要的權限會拖慢商店審查）")
     for p in cs_matches:
         if not any(matches(p, u) for _, u in CONTENT):
-            print(f"  ⚠️  content_scripts 的 {p} 沒有對應到任何已知網址形狀")
-    print("  （沒有輸出＝每一條都有用途）")
+            extra += 1
+            print(f"  ❌ content_scripts 的 {p} 沒有對應到任何已知網址形狀")
+    if not extra:
+        print("  （沒有輸出＝每一條都有用途）")
 
     print()
-    if bad:
-        print(f"❌ {bad} 項沒過")
+    if bad or extra:
+        parts = []
+        if bad:
+            parts.append(f"{bad} 項沒涵蓋到")
+        if extra:
+            parts.append(f"{extra} 項多要了")
+        print("❌ " + "、".join(parts))
         sys.exit(1)
     print("✅ 全部通過")
 
