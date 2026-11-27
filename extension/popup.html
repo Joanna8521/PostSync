@@ -60,110 +60,92 @@
 <body>
   <header>
     <h1>⚡ Post Sync</h1>
-    <p>滑到想收的貼文，按一下就存起來</p>
+    <p data-i18n="brandTagline"></p>
     <p id="ver" style="color:#8b8fb5;font-size:10.5px;margin-top:4px"></p>
   </header>
 
   <section>
     <div class="row">
       <span class="dot" id="dot"></span>
-      <span class="grow" id="connText">檢查中…</span>
-      <button id="connect">連接 Google</button>
+      <span class="grow" id="connText" data-i18n="connChecking"></span>
+      <button id="connect" data-i18n="btnConnectGoogle"></button>
     </div>
     <div class="row">
       <input type="checkbox" id="enabled">
-      <label for="enabled" class="grow">在社群頁面顯示浮動按鈕</label>
+      <label for="enabled" class="grow" data-i18n="optFloatButton"></label>
     </div>
-    <div class="hint">
-      也可以<b>在貼文上按右鍵 →「⚡ 收這篇貼文」</b>，指哪篇收哪篇，最不會出錯。<br>
-      想用快速鍵的話到 <b>chrome://extensions/shortcuts</b> 自己綁一組。
-    </div>
+    <div class="hint" data-i18n="hintRightClick"></div>
     <div class="row" style="margin-top:10px">
       <input type="checkbox" id="albumEnabled">
-      <label for="albumEnabled" class="grow">相簿貼文自動翻頁收圖</label>
+      <label for="albumEnabled" class="grow" data-i18n="optAlbum"></label>
     </div>
-    <div class="hint">
-      臉書的相簿貼文只鋪 5 張縮圖，其餘的圖不在網頁裡。開著的話，收錄相簿時
-      會<b>短暫打開相片檢視器</b>逐張翻，收完自動關閉並回到原位。<br>
-      這是唯一會打開彈出視窗的功能——翻頁走鍵盤、不點檢視器裡的任何選單。
-      不想要就關掉，那樣相簿只會收到前 5 張。
-    </div>
+    <div class="hint" data-i18n="hintAlbum"></div>
   </section>
 
   <section>
-    <label class="small">收藏對象（各自一個 Drive 資料夾）</label>
+    <label class="small" data-i18n="labelProfiles"></label>
     <div class="row" style="margin-top:4px">
       <select id="profile" class="grow"></select>
-      <button id="addProfile">＋</button>
+      <button id="addProfile" data-i18n-title="btnAddProfile">＋</button>
     </div>
-    <label class="small" style="display:block;margin-top:10px">Drive 資料夾名稱</label>
-    <input type="text" id="folderName" placeholder="Post Sync 貼文收藏">
+    <label class="small" style="display:block;margin-top:10px" data-i18n="labelFolderName"></label>
+    <input type="text" id="folderName" data-i18n-placeholder="defaultFolderName">
     <div class="row" style="margin-top:10px">
       <input type="checkbox" id="driveEnabled">
-      <label for="driveEnabled" class="grow">寫入 Google Drive（一篇一份 Doc，圖片嵌在裡面）</label>
+      <label for="driveEnabled" class="grow" data-i18n="optDriveEnabled"></label>
     </div>
   </section>
 
   <section>
     <div class="row">
       <input type="checkbox" id="f4Enabled">
-      <label for="f4Enabled" class="grow"><b>同步到 Focus4ai 知識庫</b></label>
+      <label for="f4Enabled" class="grow" data-i18n="optF4Enabled"></label>
     </div>
     <div class="sub">
-      <label class="small" style="display:block;margin-top:8px">站台網址</label>
+      <label class="small" style="display:block;margin-top:8px" data-i18n="labelF4Base"></label>
       <input type="text" id="f4Base" placeholder="https://app.focus4ai.com">
-      <label class="small" style="display:block;margin-top:8px">資料夾</label>
+      <label class="small" style="display:block;margin-top:8px" data-i18n="labelF4Folder"></label>
       <input type="text" id="f4Folder" placeholder="00_inbox/post-sync">
       <div class="row" style="margin-top:8px">
         <input type="checkbox" id="f4Private">
-        <label for="f4Private" class="grow">標記為 local_only（不送外部模型）</label>
+        <label for="f4Private" class="grow" data-i18n="optF4Private"></label>
       </div>
-      <div class="hint">
-        社群貼文多半是公開內容，預設<b>不</b>標記，這樣才進得了檢索。
-        收私密社團的東西再打開。
-      </div>
-      <button id="f4Test" style="width:100%;margin-top:8px">測試知識庫連線</button>
+      <div class="hint" data-i18n="hintF4Private"></div>
+      <button id="f4Test" style="width:100%;margin-top:8px" data-i18n="btnF4Test"></button>
     </div>
   </section>
 
   <section>
     <div class="row">
       <input type="checkbox" id="p2sCollect">
-      <label for="p2sCollect" class="grow"><b>留一份 persona-to-skill 匯入檔</b></label>
+      <label for="p2sCollect" class="grow" data-i18n="optP2sCollect"></label>
     </div>
     <div class="sub">
-      <div class="hint">
-        預設關閉。打開之後，你<b>自己按下收錄</b>的貼文會多留一份原文在本機，
-        匯出成 persona-to-skill 吃的 JSON。<br>
-        它不會去抓你沒按的東西，也不會送去任何地方——檔案存到哪裡由你按下面那顆鈕決定。
-      </div>
+      <div class="hint" data-i18n="hintP2sCollect"></div>
       <div class="row" style="margin-top:8px">
-        <span class="grow small" id="p2sCount">尚未統計</span>
-        <button id="p2sClear">清空</button>
+        <span class="grow small" id="p2sCount"></span>
+        <button id="p2sClear" data-i18n="btnP2sClear"></button>
       </div>
-      <button id="p2sExport" style="width:100%;margin-top:8px">匯出匯入檔</button>
-      <div class="hint">
-        匯出檔<b>不會</b>幫你填來源等級與人物，那兩欄要你自己判斷：
-        哪些是本人親筆、哪些是小編或代筆，機器看不出來，
-        persona-to-skill 也因此不准它自己猜。
-      </div>
+      <button id="p2sExport" style="width:100%;margin-top:8px" data-i18n="btnP2sExport"></button>
+      <div class="hint" data-i18n="hintP2sExport"></div>
     </div>
   </section>
 
   <section>
-    <button class="primary" id="save">儲存設定</button>
+    <button class="primary" id="save" data-i18n="btnSave"></button>
     <div class="msg" id="msg"></div>
     <div class="row" style="margin-top:8px">
-      <button id="diag" class="grow">檢查目前分頁</button>
-      <button id="clearSeen">清除去重紀錄</button>
+      <button id="diag" class="grow" data-i18n="btnDiag"></button>
+      <button id="clearSeen" data-i18n="btnClearSeen"></button>
     </div>
   </section>
 
   <section>
-    <label class="small">最近寫入</label>
+    <label class="small" data-i18n="labelRecentLog"></label>
     <div class="log" id="log"></div>
   </section>
 
+  <script src="src/i18n.js"></script>
   <script src="src/defaults.js"></script>
   <script src="src/popup.js"></script>
 </body>

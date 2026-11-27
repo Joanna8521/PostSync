@@ -9,7 +9,11 @@
 
 // 檔名規則與預設值都跟 popup／content script 共用同一份，
 // 兩邊各寫一份遲早會分岔：畫面顯示 A、實際寫進 B，而且不會有任何錯誤訊息
-importScripts('naming.js', 'defaults.js', 'export_p2s.js');
+importScripts('i18n.js', 'naming.js', 'defaults.js', 'export_p2s.js');
+const T = self.POST_SYNC_I18N.t;
+// 命名層回傳的是訊息代碼（見 naming.js 檔頭），翻譯函式要注入一次。
+self.POST_SYNC_NAME.setTranslator(T);
+self.PostSyncExportP2S.setTranslator(T);
 const { topicOf, docStem } = self.POST_SYNC_NAME;
 const DEF = self.POST_SYNC_DEFAULTS;
 
@@ -37,7 +41,7 @@ async function buildMenu() {
   }));
   chrome.contextMenus.create({
     id: MENU_ID,
-    title: '⚡ 收這篇貼文',
+    title: T('menuCapture'),
     contexts: ['page', 'selection', 'link', 'image'],
     documentUrlPatterns: patterns,
   }, () => { void chrome.runtime.lastError; });
@@ -140,7 +144,7 @@ function blobCache() {
     if (!cache.has(url)) {
       cache.set(url, (async () => {
         const res = await fetchT(url, {}, 30000);
-        if (!res.ok) throw new Error(`下載失敗 ${res.status}`);
+        if (!res.ok) throw new Error(T('errDownload', String(res.status)));
         return res.blob();
       })());
     }
@@ -168,7 +172,8 @@ function withTimeout(promise, ms, what) {
   return Promise.race([
     promise.finally(() => clearTimeout(timer)),
     new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`${what}逾時（${Math.round(ms / 1000)} 秒沒有回應）`)), ms);
+      timer = setTimeout(() => reject(new Error(
+        T('errTimeoutWhat', [what, String(Math.round(ms / 1000))]))), ms);
     }),
   ]);
 }
@@ -180,7 +185,8 @@ async function fetchT(url, opts = {}, ms = 45000) {
     return await fetch(url, { ...opts, signal: ctl.signal });
   } catch (e) {
     if (e.name === 'AbortError') {
-      throw new Error(`連線逾時（${Math.round(ms / 1000)} 秒）：${new URL(url).host}`);
+      throw new Error(T('errTimeoutConn',
+        [String(Math.round(ms / 1000)), new URL(url).host]));
     }
     throw e;
   } finally {
@@ -190,7 +196,7 @@ async function fetchT(url, opts = {}, ms = 45000) {
 
 // 有些例外的 str() 就是空字串，畫面上只剩「失敗：」，等於沒有訊息
 function errMsg(e) {
-  return (e && e.message) || (e && e.constructor && e.constructor.name) || '未知錯誤';
+  return (e && e.message) || (e && e.constructor && e.constructor.name) || T('errUnknown');
 }
 
 // ── OAuth ────────────────────────────────────────────
@@ -204,8 +210,7 @@ function clientIdSet() {
 function getToken(interactive) {
   if (!clientIdSet()) {
     return Promise.reject(new Error(
-      '尚未設定 Google OAuth client_id。照 README 的「OAuth 設定」做一次，'
-      + '把 client_id 填進 manifest.json；或先關掉 Drive、只用 Focus4ai 知識庫。'
+      T('errNoClientId')
     ));
   }
   // getAuthToken 是 **Chrome 專屬**的：它靠 Chrome 內建的 Google 帳號整合，
@@ -213,9 +218,7 @@ function getToken(interactive) {
   // 不講清楚的話，使用者只會看到「未知錯誤」而完全不知道是瀏覽器的問題。
   if (typeof chrome.identity?.getAuthToken !== 'function') {
     return Promise.reject(new Error(
-      'Drive 授權需要 Chrome 本身：這個瀏覽器（Arc／Brave／Edge…）沒有提供 '
-      + 'Google 帳號整合。收錄功能與 Focus4ai 知識庫同步不受影響，'
-      + '只有寫進 Drive 這一項要用 Chrome。'
+      T('errNeedsChrome')
     ));
   }
 
@@ -226,9 +229,8 @@ function getToken(interactive) {
         // 非 Chrome 的 Chromium 有時有這個函式、呼叫卻一定失敗，
         // 訊息還很含糊。把可能的原因一起講出來。
         reject(new Error(
-          `${raw || '尚未連接 Google'}`
-          + '（若你用的是 Arc／Brave／Edge，Drive 授權需要 Chrome 本身；'
-          + '收錄與知識庫同步不受影響）'
+          `${raw || T('connNotConnected')}`
+          + T('connNonChrome')
         ));
       } else {
         resolve(token);
@@ -236,7 +238,7 @@ function getToken(interactive) {
     });
   });
   // 授權視窗開了沒人理，callback 就永遠不會回來
-  return interactive ? withTimeout(p, 120000, 'Google 授權') : p;
+  return interactive ? withTimeout(p, 120000, T('errGoogleAuth')) : p;
 }
 
 async function withAuthRetry(fn) {
@@ -270,7 +272,8 @@ async function api(token, method, url, body) {
       const j = await res.json();
       detail = (j.error && j.error.message) || '';
     } catch (_) { /* 非 JSON 錯誤內文 */ }
-    throw new Error(`Google API ${res.status}：${detail || res.statusText || '未知錯誤'}`);
+    throw new Error(T('errGoogleApi',
+      [String(res.status), detail || res.statusText || T('errUnknown')]));
   }
   return res.status === 204 ? null : res.json();
 }
@@ -355,7 +358,7 @@ async function handleCapture(p, force, tabId) {
   const wantF4 = !!s.f4Enabled && !!s.f4Base;
 
   if (!wantDrive && !wantF4) {
-    const m = 'Drive 與 Focus4ai 都沒有啟用，沒有地方可以寫。請點擴充圖示設定其中一個。';
+    const m = T('errNoTarget');
     await logEntry({ ok: false, msg: m, time: Date.now() });
     badge(false);
     return { ok: false, error: m };
@@ -368,7 +371,7 @@ async function handleCapture(p, force, tabId) {
   let driveError = '';
   if (wantDrive) {
     try {
-      progress(tabId, '確認 Google 授權…');
+      progress(tabId, T('stepAuth'));
       drive = await withAuthRetry((token) => writeDrive(token, p, tabId, getBlob));
     } catch (e) {
       driveError = errMsg(e);
@@ -379,7 +382,7 @@ async function handleCapture(p, force, tabId) {
   let f4Error = '';
   if (wantF4) {
     try {
-      progress(tabId, '同步到知識庫…');
+      progress(tabId, T('stepF4'));
       f4 = await syncToFocus4ai(p, key, drive, getBlob, tabId);
     } catch (e) {
       f4Error = errMsg(e);
@@ -408,19 +411,22 @@ async function handleCapture(p, force, tabId) {
   // 「沒提到」會被當成「有做」。沒啟用的目的地也要明講，
   // 不然使用者以為兩邊都寫了，過很久才發現知識庫是空的。
   const bits = [];
-  if (drive) bits.push(`Drive「${drive.docName}」${drive.imgNote ? `（${drive.imgNote}）` : ''}`);
-  else if (driveError) bits.push(`Drive 失敗：${driveError}`);
-  else bits.push('Drive 未啟用');
+  if (drive) {
+    bits.push(T('bitDrive', [drive.docName,
+      drive.imgNote ? T('bitDriveImgNote', drive.imgNote) : '']).trim());
+  } else if (driveError) bits.push(T('bitDriveFailed', driveError));
+  else bits.push(T('bitDriveOff'));
 
   // 圖片張數要講出來——輪播有沒有翻完，看這個數字最快
-  if (p.images && p.images.length) bits.push(`圖 ${p.images.length} 張`);
-  if (f4) bits.push(`知識庫 ${f4.chunks} 片`);
-  else if (f4Error) bits.push(`知識庫失敗：${f4Error}`);
-  else bits.push('知識庫未啟用');
+  if (p.images && p.images.length) bits.push(T('bitImages', String(p.images.length)));
+  if (f4) bits.push(T('bitF4', String(f4.chunks)));
+  else if (f4Error) bits.push(T('bitF4Failed', f4Error));
+  else bits.push(T('bitF4Off'));
 
   await logEntry({
     ok,
-    msg: `${(p.author || '未署名').slice(0, 20)}・${p.platformLabel}：${bits.join('・')}`,
+    msg: T('logLine', [(p.author || T('noAuthor')).slice(0, 20),
+                        p.platformLabel, bits.join('・')]),
     docUrl: drive ? drive.docUrl : '',
     time: Date.now(),
   });
@@ -438,14 +444,14 @@ async function handleCapture(p, force, tabId) {
 
 async function writeDrive(token, p, tabId, getBlob) {
   const profile = await activeProfile();
-  progress(tabId, '確認 Drive 資料夾…');
+  progress(tabId, T('stepFolder'));
   const folderId = await ensureFolder(token, profile);
-  progress(tabId, `建立這篇的 Doc（${p.text.length.toLocaleString()} 字）…`);
+  progress(tabId, T('stepCreateDoc', p.text.length.toLocaleString()));
   const doc = await createPostDoc(token, folderId, p);
 
   let imgNote = '';
   if (p.images && p.images.length) {
-    progress(tabId, `嵌入 ${p.images.length} 張圖…`);
+    progress(tabId, T('stepEmbed', String(p.images.length)));
     imgNote = await insertImages(token, doc.docId, folderId, p.images, tabId, getBlob);
   }
   return {
@@ -460,7 +466,8 @@ async function activeProfile() {
   const profiles = Array.isArray(s.profiles) ? s.profiles : [];
   let p = profiles.find((x) => x.id === s.activeProfileId) || profiles[0];
   if (!p) {
-    p = { id: 'default', name: '自用', folderName: 'Post Sync 貼文收藏' };
+    p = { id: 'default', name: T('defaultProfileName'),
+           folderName: T('defaultFolderName') };
     await chrome.storage.sync.set({ profiles: [p], activeProfileId: p.id });
   }
   return p;
@@ -475,12 +482,11 @@ async function ensureFolder(token, profile) {
     try {
       const f = await api(token, 'GET', `${DRIVE}/files/${profile.folderId}?fields=id,trashed,mimeType`);
       if (f && !f.trashed && f.mimeType === 'application/vnd.google-apps.folder') return profile.folderId;
-      throw new Error('指定的 ID 不是有效的資料夾（可能已刪除）');
+      throw new Error(T('errFolderNotFolder'));
     } catch (e) {
       if (e.auth) throw e;
       throw new Error(
-        '無法存取你指定的資料夾。本擴充只有「自己建立的檔案」的權限，'
-        + '請清空這個欄位讓它自動建立，再到 Google Drive 把該資料夾拖到你想要的位置（搬移後仍然有效）。'
+        T('errFolderNoAccess')
       );
     }
   }
@@ -494,7 +500,8 @@ async function ensureFolder(token, profile) {
       if (e.auth) throw e; // 其他錯誤 → 資料夾不見了，往下重建
     }
   }
-  const name = String(profile.folderName || `Post Sync — ${profile.name}`).trim() || 'Post Sync 貼文收藏';
+  const name = String(profile.folderName || `Post Sync — ${profile.name}`).trim()
+    || T('defaultFolderName');
   const f = await api(token, 'POST', `${DRIVE}/files?fields=id`, {
     name,
     mimeType: 'application/vnd.google-apps.folder',
@@ -515,12 +522,14 @@ async function createPostDoc(token, folderId, p) {
   });
 
   const title = `${topic}\n`;
-  const meta = `${p.author || '未署名'}・${p.platformLabel}${p.timeText ? `・${p.timeText}` : ''}・收錄於 ${dateTimeStr()}\n`;
+  const meta = T('docByline', [p.author || T('noAuthor'), p.platformLabel,
+                               p.timeText ? T('docTimeSuffix', p.timeText) : '',
+                               dateTimeStr()]) + '\n';
   // 抓不到連結就明講。寫一個「https://www.facebook.com/」進去更糟——
   // 看起來像有連結，點下去卻回到動態牆首頁。
   const link = p.permalink
     ? `${p.permalink}\n\n`
-    : `（這一則抓不到原文連結，於 ${p.pageUrl || '動態牆'} 收錄）\n\n`;
+    : T('docNoPermalink', p.pageUrl || T('docFeed')) + '\n\n';
   const body = `${cleanText(p.text)}\n\n`;
   const text = title + meta + link + body;
   const linkStart = 1 + title.length + meta.length;
@@ -585,7 +594,7 @@ async function viaDrive(token, docId, folderId, url, getBlob) {
   // 位元組走共用快取：知識庫那條可能已經抓過同一張了
   const blob = getBlob ? await getBlob(url) : await (await fetchT(url, {}, 30000)).blob();
   // Docs API 對嵌入圖片的上限是 50MB / 2500 萬像素，超過就別浪費一次來回
-  if (blob.size > 45 * 1024 * 1024) throw new Error('圖片過大');
+  if (blob.size > 45 * 1024 * 1024) throw new Error(T('errImageTooBig'));
 
   const boundary = `postsync${Math.random().toString(36).slice(2)}`;
   const meta = { name: `postsync-tmp-${Date.now()}`, parents: [folderId] };
@@ -605,7 +614,7 @@ async function viaDrive(token, docId, folderId, url, getBlob) {
     },
     90000,
   );
-  if (!up.ok) throw new Error(`上傳失敗 ${up.status}`);
+  if (!up.ok) throw new Error(T('errUpload', String(up.status)));
   const fileId = (await up.json()).id;
 
   try {
@@ -625,7 +634,8 @@ async function insertImages(token, docId, folderId, urls, tabId, getBlob) {
   const failed = [];
   let done = 0;
   for (const url of urls) {
-    progress(tabId, `嵌入圖片 ${done + failed.length + 1}/${urls.length}…`);
+    progress(tabId, T('stepEmbedOne',
+      [String(done + failed.length + 1), String(urls.length)]));
     try {
       await insertOneImage(token, docId, url);
       done++;
@@ -641,7 +651,8 @@ async function insertImages(token, docId, folderId, urls, tabId, getBlob) {
 
   if (failed.length) {
     // 失敗的不能安靜地消失，但也不能假裝那些網址還會活著
-    const note = `（另有 ${failed.length} 張圖嵌入失敗，以下網址通常幾天後就會失效）\n${failed.join('\n')}\n`;
+    const note = T('docImagesFailed',
+      [String(failed.length), failed.join('\n')]) + '\n';
     try {
       const end = await docEnd(token, docId);
       await api(token, 'POST', `${DOCS}/documents/${docId}:batchUpdate`, {
@@ -649,7 +660,7 @@ async function insertImages(token, docId, folderId, urls, tabId, getBlob) {
       });
     } catch (_) { /* 連註記都寫不進去就算了，回傳值還是會說 */ }
   }
-  return failed.length ? `圖 ${done}/${urls.length}` : '';
+  return failed.length ? T('bitImagesPartial', [String(done), String(urls.length)]) : '';
 }
 
 // ── Focus4ai 知識庫 ──────────────────────────────────
@@ -671,13 +682,12 @@ async function ensureOrigin(base) {
   try {
     origin = new URL(base).origin;
   } catch (_) {
-    throw new Error(`網址格式不對：${base}`);
+    throw new Error(T('errBadUrl', base));
   }
   const has = await chrome.permissions.contains({ origins: [`${origin}/*`] });
   if (!has) {
     throw new Error(
-      `缺少存取 ${origin} 的權限。請點擴充圖示 →「儲存設定」→ `
-      + '在 Chrome 跳出的確認視窗按「允許」'
+      T('errNoHostPerm', origin)
     );
   }
   return origin;
@@ -699,7 +709,7 @@ async function readDoc(base, path) {
 // 三種失敗要分得出來：連不上、被導到登入頁、路徑不對。
 async function testFocus4ai(rawBase) {
   const base = String(rawBase || '').replace(/\/+$/, '');
-  if (!base) return { ok: false, error: '沒有填站台網址' };
+  if (!base) return { ok: false, error: T('errNoBase') };
   try {
     await ensureOrigin(base);
   } catch (e) {
@@ -709,13 +719,14 @@ async function testFocus4ai(rawBase) {
   try {
     res = await fetchT(`${base}/api/notes?limit=1`, { credentials: 'include' }, 20000);
   } catch (e) {
-    return { ok: false, error: `連不上：${errMsg(e)}（網址對嗎？站台有在跑嗎？）` };
+    return { ok: false, error: T('errF4Unreachable', errMsg(e)) };
   }
   if (!res.ok) {
-    return { ok: false, error: `站台回 ${res.status}${res.status === 404 ? '（這個網址沒有 /api，確認是站台不是官網）' : ''}` };
+    return { ok: false, error: T('errF4Status',
+      [String(res.status), res.status === 404 ? T('errF4Is404') : '']) };
   }
   if (!isJson(res)) {
-    return { ok: false, error: '回應不是 JSON，通常代表被導到登入頁。請先在這個瀏覽器登入該站台' };
+    return { ok: false, error: T('errF4NotJsonLogin') };
   }
   const j = await res.json();
   return { ok: true, total: j.total };
@@ -733,10 +744,10 @@ async function uploadAssets(base, notePath, urls, getBlob, tabId) {
   const md = [];
   const failed = [];
   for (let i = 0; i < urls.length; i++) {
-    progress(tabId, `知識庫存圖 ${i + 1}/${urls.length}…`);
+    progress(tabId, T('stepF4Image', [String(i + 1), String(urls.length)]));
     try {
       const blob = await getBlob(urls[i]);
-      if (blob.size > 8 * 1024 * 1024) throw new Error('超過 8 MB');
+      if (blob.size > 8 * 1024 * 1024) throw new Error(T('errTooBig8mb'));
       const res = await fetchT(`${base}/api/doc/asset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -748,10 +759,10 @@ async function uploadAssets(base, notePath, urls, getBlob, tabId) {
         try { detail = (await res.json()).detail || ''; } catch (_) { /* 非 JSON */ }
         throw new Error(detail || `HTTP ${res.status}`);
       }
-      if (!isJson(res)) throw new Error('回應不是 JSON（可能被導到登入頁）');
+      if (!isJson(res)) throw new Error(T('errF4NotJsonShort'));
       const j = await res.json();
       if (j && j.markdown) md.push(j.markdown);
-      else throw new Error('回應沒有 markdown 欄位');
+      else throw new Error(T('errF4NoMarkdown'));
     } catch (e) {
       failed.push(errMsg(e));
     }
@@ -784,17 +795,17 @@ async function syncToFocus4ai(p, key, drive, getBlob, tabId) {
     const r = await uploadAssets(base, path, p.images, getBlob, tabId);
     assetMd = r.md;
     if (r.failed.length) {
-      imgLine = `- 圖片：${assetMd.length}/${p.images.length} 張存進知識庫`
-        + `（${r.failed.length} 張失敗：${r.failed[0]}）`;
+      imgLine = T('mdImagesStored', [String(assetMd.length), String(p.images.length),
+        T('mdImagesSomeFailed', [String(r.failed.length), r.failed[0]])]);
     } else if (assetMd.length) {
-      imgLine = `- 圖片：${assetMd.length} 張`;
+      imgLine = T('mdImagesCount', String(assetMd.length));
     }
   }
   // 一張都沒存成、或知識庫還不支援附件時，至少讓人從這裡找得到圖
   if (!assetMd.length && p.images && p.images.length) {
     imgLine = drive && drive.docUrl
-      ? `- 圖片：${p.images.length} 張 → [在 Drive 文件裡看](${drive.docUrl})`
-      : `- 圖片：${p.images.length} 張（沒有存進來）`;
+      ? T('mdImagesInDrive', [String(p.images.length), drive.docUrl])
+      : T('mdImagesNotStored', String(p.images.length));
   }
   // 社群貼文多半是公開內容，預設讓它可以被檢索用的模型讀到——
   // 這跟 Mesh Sync 相反（那邊收的是自己的對話，常有客戶名與報價）。
@@ -803,19 +814,20 @@ async function syncToFocus4ai(p, key, drive, getBlob, tabId) {
     '---',
     `title: "${mdEscape(topicOf(p))}"`,
     `source: "${p.permalink}"`,
-    `author: "${mdEscape(p.author || '未署名')}"`,
+    `author: "${mdEscape(p.author || T('noAuthor'))}"`,
     `platform: ${p.platform}`,
     `captured: ${stamp}`,
     ...(p.timeText ? [`posted: "${mdEscape(p.timeText)}"`] : []),
     ...(s.f4Private ? ['privacy: local_only'] : []),
-    'tags: [post-sync, 社群貼文]',
+    `tags: [${T('mdTags')}]`,
     '---',
     '',
     `# ${topicOf(p)}`,
     '',
-    `- 作者：${p.author || '未署名'}・${p.platformLabel}${p.timeText ? `・${p.timeText}` : ''}`,
-    `- 原文：${p.permalink || '（抓不到連結）'}`,
-    `- 收錄：${stamp}`,
+    T('mdAuthorLine', [p.author || T('noAuthor'), p.platformLabel,
+                       p.timeText ? T('docTimeSuffix', p.timeText) : '']),
+    T('mdSourceLine', p.permalink || T('mdNoPermalink')),
+    T('mdCollectedLine', stamp),
     ...(imgLine ? [imgLine] : []),
     '',
     cleanText(p.text),
@@ -832,12 +844,13 @@ async function syncToFocus4ai(p, key, drive, getBlob, tabId) {
   if (!res.ok) {
     let detail = '';
     try { detail = (await res.json()).detail || ''; } catch (_) { /* 非 JSON */ }
-    throw new Error(`Focus4ai ${res.status}：${detail || res.statusText || '寫入失敗'}`);
+    throw new Error(T('errF4Write',
+      [String(res.status), detail || res.statusText || T('errF4WriteFailed')]));
   }
   // 被導到登入頁時會拿到 200 + HTML。不擋的話會謊報成功，
   // 而使用者要過很久才發現知識庫裡什麼都沒有。
   if (!isJson(res)) {
-    throw new Error('回應不是 JSON，通常代表被導到登入頁；請先在瀏覽器登入該站台再試');
+    throw new Error(T('errF4NotJsonLogin'));
   }
   const j = await res.json();
   return { path, chunks: j.chunks };

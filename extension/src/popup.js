@@ -6,6 +6,8 @@
 
 const $ = (id) => document.getElementById(id);
 const DEF = self.POST_SYNC_DEFAULTS;
+const I = self.POST_SYNC_I18N;
+const t = I.t;
 
 const SYNC_KEYS = [
   'enabled', 'profiles', 'activeProfileId', 'driveEnabled',
@@ -25,6 +27,9 @@ function msg(text, ok) {
 // ── 載入 ─────────────────────────────────────────────
 
 async function load() {
+  // 靜態文字先填，再填設定值。順序反過來的話會先看到一瞬間的空白介面。
+  I.fill();
+
   const s = await chrome.storage.sync.get(SYNC_KEYS);
 
   $('enabled').checked = s.enabled !== false;
@@ -40,7 +45,8 @@ async function load() {
 
   profiles = Array.isArray(s.profiles) && s.profiles.length
     ? s.profiles
-    : [{ id: 'default', name: '自用', folderName: 'Post Sync 貼文收藏' }];
+    : [{ id: 'default', name: t('defaultProfileName'),
+         folderName: t('defaultFolderName') }];
   activeId = s.activeProfileId || profiles[0].id;
   if (!profiles.some((p) => p.id === activeId)) activeId = profiles[0].id;
   renderProfiles();
@@ -75,27 +81,27 @@ function checkConn() {
     const on = res && res.connected;
     $('dot').className = `dot${on ? ' on' : ''}`;
     if (on) {
-      $('connText').textContent = '已連接 Google Drive';
-      $('connect').textContent = '重新連接';
+      $('connText').textContent = t('connConnected');
+      $('connect').textContent = t('btnReconnect');
     } else if (res && res.reason === 'no_client_id') {
-      $('connText').textContent = 'Drive 未設定（見 README）';
-      $('connect').textContent = '連接 Google';
+      $('connText').textContent = t('connNoClientId');
+      $('connect').textContent = t('btnConnectGoogle');
     } else {
-      $('connText').textContent = '尚未連接 Google';
-      $('connect').textContent = '連接 Google';
+      $('connText').textContent = t('connNotConnected');
+      $('connect').textContent = t('btnConnectGoogle');
     }
   });
 }
 
 $('connect').addEventListener('click', () => {
-  msg('等待 Google 授權視窗…', true);
+  msg(t('connWaiting'), true);
   chrome.runtime.sendMessage({ type: 'POSTSYNC_CONNECT' }, (res) => {
     if (chrome.runtime.lastError) return msg(chrome.runtime.lastError.message, false);
     if (res && res.ok) {
-      msg('✅ 已連接', true);
+      msg(t('connDone'), true);
       checkConn();
     } else {
-      msg(`❌ ${(res && res.error) || '連接失敗'}`, false);
+      msg(`❌ ${(res && res.error) || t('connFailed')}`, false);
     }
   });
 });
@@ -111,13 +117,13 @@ $('profile').addEventListener('change', () => {
 });
 
 $('addProfile').addEventListener('click', () => {
-  const name = prompt('新的收藏對象名稱（例如：客戶 A、選書、產業觀察）');
+  const name = prompt(t('promptNewProfile'));
   if (!name || !name.trim()) return;
   const id = `p${Date.now()}`;
   profiles.push({ id, name: name.trim(), folderName: `Post Sync — ${name.trim()}` });
   activeId = id;
   renderProfiles();
-  msg('新增了，記得按「儲存設定」', true);
+  msg(t('profileAdded'), true);
 });
 
 // ── 儲存 ─────────────────────────────────────────────
@@ -144,12 +150,12 @@ function ensureHostPermission(base, cb) {
   try {
     origin = new URL(base).origin;
   } catch (_) {
-    return msg('❌ 網址格式不對，要像 https://app.focus4ai.com', false);
+    return msg(t('msgBadUrlLike'), false);
   }
   chrome.permissions.request({ origins: [`${origin}/*`] }, (granted) => {
     if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
     if (!granted) {
-      return msg(`❌ 沒有取得存取 ${origin} 的權限，知識庫同步不會運作`, false);
+      return msg(t('msgNoPerm', origin), false);
     }
     cb();
   });
@@ -162,11 +168,11 @@ $('save').addEventListener('click', () => {
   const f4Enabled = $('f4Enabled').checked;
   const f4Base = cleanBase($('f4Base').value);
   if (f4Enabled) {
-    if (!f4Base) return msg('❌ 開了知識庫同步就要填站台網址', false);
+    if (!f4Base) return msg(t('msgF4NeedsBase'), false);
     let host;
     try { host = new URL(f4Base).hostname; } catch (_) { host = ''; }
     if (/(^|\.)focus4ai\.com$/i.test(host) && !/^app\./i.test(host)) {
-      return msg('❌ focus4ai.com 是官網、沒有 API。線上站台請填 https://app.focus4ai.com', false);
+      return msg(t('msgF4WrongHost'), false);
     }
   }
 
@@ -184,7 +190,7 @@ $('save').addEventListener('click', () => {
       p2sCollect: $('p2sCollect').checked,
     });
     $('f4Base').value = f4Base;
-    msg(f4Enabled ? '✅ 已儲存，建議按一次「測試知識庫」確認寫得進去' : '✅ 已儲存', true);
+    msg(f4Enabled ? t('msgSavedTestHint') : t('msgSaved'), true);
   };
 
   // permissions.request 必須在使用者手勢裡呼叫，所以不能有任何 await 卡在前面
@@ -195,13 +201,13 @@ $('save').addEventListener('click', () => {
 // 「收了一篇才發現寫不進去」太慢了，設定完就要能當場確認
 $('f4Test').addEventListener('click', () => {
   const base = cleanBase($('f4Base').value);
-  if (!base) return msg('❌ 先填站台網址', false);
-  msg('⏳ 測試中…', true);
+  if (!base) return msg(t('msgNeedBaseFirst'), false);
+  msg(t('msgTesting'), true);
   ensureHostPermission(base, () => {
     chrome.runtime.sendMessage({ type: 'POSTSYNC_F4_TEST', base }, (res) => {
       if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
-      if (res && res.ok) msg(`✅ 連得上，知識庫目前有 ${res.total} 份文件`, true);
-      else msg(`❌ ${(res && res.error) || '測試失敗'}`, false);
+      if (res && res.ok) msg(t('msgTestOk', String(res.total)), true);
+      else msg(`❌ ${(res && res.error) || t('msgTestFailed')}`, false);
     });
   });
 });
@@ -211,38 +217,39 @@ $('f4Test').addEventListener('click', () => {
 
 $('diag').addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]) return msg('❌ 找不到目前分頁', false);
+    if (!tabs[0]) return msg(t('diagNoTab'), false);
     chrome.tabs.sendMessage(tabs[0].id, { type: 'POSTSYNC_DIAG' }, (res) => {
       if (chrome.runtime.lastError || !res) {
-        return msg('❌ 這個分頁沒有 Post Sync（不是支援的平台，或頁面要重新整理一次）', false);
+        return msg(t('diagNoContent'), false);
       }
       const ok = res.posts > 0;
       const lines = [
-        `版本：${res.build || '?'}`,
-        `平台：${res.label}　頁面：${res.path}`,
-        `錨點 ${res.selector}`,
-        `→ 偵測到 ${res.posts} 則貼文${ok ? '' : '　⚠️ 這一頁的結構不一樣'}`,
-        res.hasActive ? '目前鎖定：有' : '目前鎖定：無（捲動一下）',
-        res.enabled ? '' : '⚠️ 浮動按鈕已關閉',
+        t('diagBuild', res.build || '?'),
+        t('diagPlatform', [res.label, res.path]),
+        t('diagSelector', res.selector),
+        t('diagPostsFound', String(res.posts)) + (ok ? '' : t('diagStructDiffers')),
+        res.hasActive ? t('diagLockedYes') : t('diagLockedNo'),
+        res.enabled ? '' : t('diagFloatOff'),
       ].filter(Boolean);
 
       // 偵測到 0 則的時候，下一個問題一定是「那這頁到底長什麼樣」。
       // 候選錨點的數量直接列出來，省一趟來回。
       if (!ok && res.probe) {
-        lines.push('', '這一頁的候選錨點：');
+        lines.push('', t('diagCandidates'));
         for (const [name, n] of Object.entries(res.probe)) {
-          lines.push(`  ${n > 0 ? '●' : '○'} ${name}：${n < 0 ? '不支援' : n}`);
+          const count = n < 0 ? t('diagUnsupported') : String(n);
+          lines.push(`  ${n > 0 ? '●' : '○'} ` + t('diagProbeRow', [name, count]));
         }
       }
       // 偵測到了卻沒鎖定：問題在「挑出畫面上那一則」，不在辨識。
       // 每一則的位置與否決理由直接列出來。
       if (res.picks) {
-        lines.push('', `視窗 ${res.viewport}　偵測到的每一則：`, ...res.picks);
+        lines.push('', t('diagEachPost', res.viewport), ...res.picks);
       }
       // 候選全落空時，直接把畫面中央往上的 DOM 路徑報出來——
       // 那就是「該拿什麼當錨點」的答案，不用再猜一輪
       if (!ok && res.sample) {
-        lines.push('', '畫面中央往上的實際結構：', ...res.sample);
+        lines.push('', t('diagActualDom'), ...res.sample);
       }
       // 「圖片沒收完」要能一眼看出死在哪一關：圖不在 DOM、尺寸被濾掉、
       // 被當成頭像、還是根本找不到翻頁鈕
@@ -251,19 +258,16 @@ $('diag').addEventListener('click', () => {
         // 「多圖只收到 N 張」有兩種完全不同的原因：DOM 裡本來就只有 N 個
         // <img>（相簿型貼文最多鋪 5 張縮圖，其餘藏在「+7」後面、沒有節點），
         // 或有節點但被濾掉。不分開報的話會往錯的方向修。
-        lines.push('', `圖片：DOM 裡 ${m.total} 個 <img>，過濾後收 ${m.taken} 張`);
-        if (m.moreOverlay) {
-          lines.push(`⚠️ 看到「${m.moreOverlay}」疊圖 —— 相簿型貼文，`
-            + '其餘的圖根本不在 DOM 裡，不是被濾掉');
-        }
-        lines.push(`/photo 連結：${m.photoLinks} 個`
-          + `　翻頁鈕：${m.hasNext ? '有' : '無'}`);
+        lines.push('', t('diagImages', [String(m.total), String(m.taken)]));
+        if (m.moreOverlay) lines.push(t('diagMoreOverlay', m.moreOverlay));
+        lines.push(t('diagPhotoLinks',
+          [String(m.photoLinks), m.hasNext ? t('diagYes') : t('diagNo')]));
         if (m.imgs.length) lines.push(...m.imgs);
         if (!m.hasNext && m.btns.length) {
-          lines.push('這一則裡的按鈕：', ...m.btns);
+          lines.push(t('diagButtons'), ...m.btns);
         }
       }
-      if (res.preview) lines.push('', `預覽：${res.preview}`);
+      if (res.preview) lines.push('', t('diagPreview', res.preview));
       msg(lines.join('\n'), ok);
     });
   });
@@ -271,7 +275,7 @@ $('diag').addEventListener('click', () => {
 
 $('clearSeen').addEventListener('click', async () => {
   await chrome.storage.local.set({ psSeen: {} });
-  msg('✅ 去重紀錄已清空，之前收過的會被當成新的', true);
+  msg(t('msgSeenCleared'), true);
 });
 
 // ── 紀錄 ─────────────────────────────────────────────
@@ -283,7 +287,7 @@ async function renderLog() {
   if (!psLog.length) {
     const d = document.createElement('div');
     d.className = 'log-item t';
-    d.textContent = '還沒有收過任何貼文';
+    d.textContent = t('logEmpty');
     box.appendChild(d);
     return;
   }
@@ -306,7 +310,7 @@ async function renderLog() {
       a.href = e.docUrl;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.textContent = '開啟 ↗';
+      a.textContent = t('linkOpen');
       d.appendChild(a);
     }
     box.appendChild(d);
@@ -322,18 +326,16 @@ async function renderP2sCount() {
   chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_COUNT' }, (res) => {
     if (chrome.runtime.lastError || !res || !res.ok) return;
     $('p2sCount').textContent = res.count
-      ? `本機留了 ${res.count} 篇`
-      : '本機還沒有留下任何一篇';
+      ? t('p2sCountSome', String(res.count))
+      : t('p2sCountNone');
   });
 }
 
 $('p2sExport').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_EXPORT' }, (res) => {
     if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
-    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || '匯出失敗'}`, false);
-    if (!res.count) {
-      return msg('❌ 本機沒有留下任何一篇。先打開上面那個開關，再去收幾則貼文', false);
-    }
+    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || t('msgP2sExportFailed')}`, false);
+    if (!res.count) return msg(t('msgP2sEmpty'), false);
     const url = URL.createObjectURL(new Blob([res.json], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
@@ -341,16 +343,16 @@ $('p2sExport').addEventListener('click', () => {
     a.click();
     // 彈出視窗一關，blob 就跟著消失。下載已經開始了，但 URL 自己收掉比較乾淨。
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-    msg(`✅ 匯出 ${res.count} 篇：${res.name}`, true);
+    msg(t('msgP2sExported', [String(res.count), res.name]), true);
   });
 });
 
 $('p2sClear').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_CLEAR' }, (res) => {
     if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
-    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || '清空失敗'}`, false);
+    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || t('msgP2sClearFailed')}`, false);
     renderP2sCount();
-    msg('✅ 匯入檔的素材已清空', true);
+    msg(t('msgP2sCleared'), true);
   });
 });
 

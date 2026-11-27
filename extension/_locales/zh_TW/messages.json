@@ -1,0 +1,826 @@
+{
+  "appName": {
+    "message": "Post Sync — 社群貼文收藏器",
+    "description": "擴充的名字，顯示在瀏覽器的擴充清單裡"
+  },
+  "appDesc": {
+    "message": "滑到想收的社群貼文，按一下就存進你自己的 Google Drive，並可同步進 Focus4ai 知識庫。支援 Facebook / Threads / X / Instagram / LinkedIn。",
+    "description": "擴充的說明，顯示在擴充清單與 Chrome 線上應用程式商店"
+  },
+  "htmlLang": {
+    "message": "zh-Hant",
+    "description": "html lang 屬性。螢幕閱讀器靠它選發音，CJK 字形也靠它挑"
+  },
+  "cmdCapture": {
+    "message": "收錄目前畫面上的這則貼文（預設沒有綁鍵，可在 chrome://extensions/shortcuts 自己設）",
+    "description": "manifest 裡快速鍵的說明，顯示在 chrome://extensions/shortcuts"
+  },
+  "brandTagline": {
+    "message": "滑到想收的貼文，按一下就存起來",
+    "description": "標題下面那一行"
+  },
+  "btnConnectGoogle": {
+    "message": "連接 Google",
+    "description": "連接 Google 帳號的按鈕"
+  },
+  "btnReconnect": {
+    "message": "重新連接",
+    "description": "已連接之後，那顆按鈕改成這個"
+  },
+  "connChecking": {
+    "message": "檢查中…",
+    "description": "剛打開 popup，還在問 background 連線狀態"
+  },
+  "connConnected": {
+    "message": "已連接 Google Drive",
+    "description": "已經連上 Drive"
+  },
+  "connNotConnected": {
+    "message": "尚未連接 Google",
+    "description": "還沒連"
+  },
+  "connNoClientId": {
+    "message": "Drive 未設定（見 README）",
+    "description": "manifest 裡沒填 OAuth client_id"
+  },
+  "connWaiting": {
+    "message": "等待 Google 授權視窗…",
+    "description": "按下連接之後，等 Google 的授權視窗"
+  },
+  "connDone": {
+    "message": "✅ 已連接",
+    "description": "連上了"
+  },
+  "connFailed": {
+    "message": "連接失敗",
+    "description": "連不上，而且 Google 沒給理由"
+  },
+  "connFailedRetry": {
+    "message": "連接失敗，請再試一次",
+    "description": "onboarding 頁的版本，多一句請再試"
+  },
+  "connNonChrome": {
+    "message": "（若你用的是 Arc／Brave／Edge，Drive 授權需要 Chrome 本身；收錄與知識庫同步不受影響）",
+    "description": "Arc／Brave／Edge 這些瀏覽器沒有 Google 帳號整合"
+  },
+  "optFloatButton": {
+    "message": "在社群頁面顯示浮動按鈕",
+    "description": "開關：在社群頁面顯示浮動按鈕"
+  },
+  "hintRightClick": {
+    "message": "也可以**在貼文上按右鍵 →「⚡ 收這篇貼文」**，指哪篇收哪篇，最不會出錯。\n想用快速鍵的話到 **chrome://extensions/shortcuts** 自己綁一組。",
+    "description": "浮動按鈕下面的說明"
+  },
+  "optAlbum": {
+    "message": "相簿貼文自動翻頁收圖",
+    "description": "開關：相簿貼文自動翻頁收圖"
+  },
+  "hintAlbum": {
+    "message": "臉書的相簿貼文只鋪 5 張縮圖，其餘的圖不在網頁裡。開著的話，收錄相簿時會**短暫打開相片檢視器**逐張翻，收完自動關閉並回到原位。\n這是唯一會打開彈出視窗的功能。翻頁走鍵盤、不點檢視器裡的任何選單。不想要就關掉，那樣相簿只會收到前 5 張。",
+    "description": "相簿開關下面的說明。這是唯一會開彈出視窗的功能，要講清楚"
+  },
+  "labelProfiles": {
+    "message": "收藏對象（各自一個 Drive 資料夾）",
+    "description": "收藏對象的下拉選單標籤"
+  },
+  "btnAddProfile": {
+    "message": "新增一個收藏對象",
+    "description": "新增收藏對象那顆加號的提示"
+  },
+  "labelFolderName": {
+    "message": "Drive 資料夾名稱",
+    "description": "Drive 資料夾名稱的欄位標籤"
+  },
+  "optDriveEnabled": {
+    "message": "寫入 Google Drive（一篇一份 Doc，圖片嵌在裡面）",
+    "description": "開關：寫入 Google Drive"
+  },
+  "promptNewProfile": {
+    "message": "新的收藏對象名稱（例如：客戶 A、選書、產業觀察）",
+    "description": "按加號之後跳出來問名字"
+  },
+  "profileAdded": {
+    "message": "新增了，記得按「儲存設定」",
+    "description": "新增之後提醒要按儲存"
+  },
+  "defaultProfileName": {
+    "message": "自用",
+    "description": "第一個收藏對象的預設名字"
+  },
+  "defaultFolderName": {
+    "message": "Post Sync 貼文收藏",
+    "description": "Drive 資料夾的預設名字，也是檔案實際存進去的資料夾名"
+  },
+  "optF4Enabled": {
+    "message": "**同步到 Focus4ai 知識庫**",
+    "description": "開關：同步到 Focus4ai 知識庫"
+  },
+  "labelF4Base": {
+    "message": "站台網址",
+    "description": "站台網址欄位"
+  },
+  "labelF4Folder": {
+    "message": "資料夾",
+    "description": "知識庫資料夾欄位"
+  },
+  "optF4Private": {
+    "message": "標記為 local_only（不送外部模型）",
+    "description": "開關：標記 local_only"
+  },
+  "hintF4Private": {
+    "message": "社群貼文多半是公開內容，預設**不**標記，這樣才進得了檢索。收私密社團的東西再打開。",
+    "description": "local_only 開關下面的說明"
+  },
+  "btnF4Test": {
+    "message": "測試知識庫連線",
+    "description": "測試知識庫連線的按鈕"
+  },
+  "optP2sCollect": {
+    "message": "**留一份 persona-to-skill 匯入檔**",
+    "description": "開關：留一份 persona-to-skill 匯入檔"
+  },
+  "hintP2sCollect": {
+    "message": "預設關閉。打開之後，你**自己按下收錄**的貼文會多留一份原文在本機，匯出成 persona-to-skill 吃的 JSON。\n它不會去抓你沒按的東西，也不會送去任何地方。檔案存到哪裡由你按下面那顆鈕決定。",
+    "description": "那個開關下面的說明。預設關閉這件事要講明"
+  },
+  "p2sCountNone": {
+    "message": "本機還沒有留下任何一篇",
+    "description": "本機還沒有留任何一篇"
+  },
+  "p2sCountSome": {
+    "message": "本機留了 $1 篇",
+    "description": "本機留了 N 篇。$1 是篇數"
+  },
+  "btnP2sClear": {
+    "message": "清空",
+    "description": "清空匯入檔素材"
+  },
+  "btnP2sExport": {
+    "message": "匯出匯入檔",
+    "description": "匯出匯入檔"
+  },
+  "hintP2sExport": {
+    "message": "匯出檔**不會**幫你填來源等級與人物，那兩欄要你自己判斷：哪些是本人親筆、哪些是小編或代筆，機器看不出來，persona-to-skill 也因此不准它自己猜。",
+    "description": "匯出按鈕下面的說明：兩欄刻意不填"
+  },
+  "btnSave": {
+    "message": "儲存設定",
+    "description": "儲存設定"
+  },
+  "btnDiag": {
+    "message": "檢查目前分頁",
+    "description": "檢查目前分頁"
+  },
+  "btnClearSeen": {
+    "message": "清除去重紀錄",
+    "description": "清除去重紀錄"
+  },
+  "labelRecentLog": {
+    "message": "最近寫入",
+    "description": "最近寫入"
+  },
+  "logEmpty": {
+    "message": "還沒有收過任何貼文",
+    "description": "還沒收過任何貼文"
+  },
+  "linkOpen": {
+    "message": "開啟 ↗",
+    "description": "紀錄每一行後面那個開啟連結"
+  },
+  "obTitle": {
+    "message": "Post Sync — 開始使用",
+    "description": "onboarding 分頁的標題"
+  },
+  "obStep1": {
+    "message": "1. 連接 Google（要存進 Drive 才需要）",
+    "description": "第一步的標題"
+  },
+  "obStep1Body": {
+    "message": "你的內容只會寫進**你自己的**雲端硬碟。本擴充沒有任何自己的伺服器。",
+    "description": "第一步的說明"
+  },
+  "obStep1Done": {
+    "message": "✅ 已連接。收進來的東西只會寫進你自己的 Google Drive。",
+    "description": "連上之後顯示的那一句"
+  },
+  "obStep2": {
+    "message": "2. 到社群頁面試一次",
+    "description": "第二步的標題"
+  },
+  "obStep2Body": {
+    "message": "打開下面任一個網站，捲動到一則貼文。它的右邊會浮出**「⚡ 收這篇」**，同時那一則會有一圈淡紫外框，告訴你按下去會收哪一篇。",
+    "description": "第二步的說明"
+  },
+  "obColPlatform": {
+    "message": "平台",
+    "description": "表格欄位：平台"
+  },
+  "obColUrl": {
+    "message": "網址",
+    "description": "表格欄位：網址"
+  },
+  "obStep2Alt": {
+    "message": "**或者**直接在貼文上按右鍵 →「⚡ 收這篇貼文」。指哪篇收哪篇，最不會出錯，浮動按鈕沒出來的時候也還能用。",
+    "description": "右鍵那條路"
+  },
+  "obStep2Hotkey": {
+    "message": "想用快速鍵的話，到 **chrome://extensions/shortcuts** 找 Post Sync 自己綁一組（預設沒有綁，免得跟你慣用的鍵打架）。",
+    "description": "快速鍵的說明"
+  },
+  "obStep3": {
+    "message": "3.（選用）同步到 Focus4ai 知識庫",
+    "description": "第三步的標題"
+  },
+  "obStep3Body": {
+    "message": "點工具列的 Post Sync 圖示，打開「同步到 Focus4ai 知識庫」，填站台網址（線上站台是 **https://app.focus4ai.com**）。",
+    "description": "第三步的說明"
+  },
+  "obStep3Why": {
+    "message": "Drive 存的是**給人看的**版本：一篇一份 Doc，圖片直接嵌在裡面。知識庫存的是**給檢索用的**版本：Markdown，收進去就切片建索引，之後問得到。",
+    "description": "兩個目的地存的東西不一樣"
+  },
+  "obKnowTitle": {
+    "message": "幾件先知道比較好的事",
+    "description": "幾件先知道比較好的事"
+  },
+  "obKnowManual": {
+    "message": "**擷取一律是你自己按的。**沒有任何自動收集，也不會自己捲動頁面。那會從「使用者閱讀」變成「自動化擷取」，帳號風險完全不同。",
+    "description": "擷取一律是自己按的"
+  },
+  "obKnowDup": {
+    "message": "**同一篇收第二次會先問你。**不是擋掉，是問一聲，並附上先前那份的連結。",
+    "description": "同一篇收第二次會先問"
+  },
+  "obKnowDrift": {
+    "message": "**平台改版可能讓抓取失準。**選擇器在 **src/adapters.js**，抓不到內文時畫面上會明講，不會假裝收好了。",
+    "description": "平台改版可能讓抓取失準"
+  },
+  "obKnowNoop": {
+    "message": "**按了沒反應？**回到那個分頁按 **Cmd+R** 重新整理一次。擴充需要頁面重新載入才會生效。還是不行就點圖示按「檢查目前分頁」。",
+    "description": "按了沒反應怎麼辦"
+  },
+  "btnCapture": {
+    "message": "⚡ 收這篇",
+    "description": "浮動按鈕上的字"
+  },
+  "btnCaptureTitle": {
+    "message": "把這則貼文存進 Post Sync",
+    "description": "浮動按鈕的滑鼠提示"
+  },
+  "menuCapture": {
+    "message": "⚡ 收這篇貼文",
+    "description": "右鍵選單那一項"
+  },
+  "toastGone": {
+    "message": "❌ 這一則已經不在畫面上了，捲一下再試",
+    "description": "按下去的時候那一則已經捲出畫面了"
+  },
+  "toastExpanding": {
+    "message": "⏳ 展開全文…",
+    "description": "正在按「查看更多」展開全文"
+  },
+  "toastNoText": {
+    "message": "❌ 抓不到這一則的內文（平台可能改版了）",
+    "description": "抓不到內文"
+  },
+  "toastCarousel": {
+    "message": "⏳ 翻過輪播收圖…",
+    "description": "翻輪播收圖"
+  },
+  "toastAlbumOpen": {
+    "message": "⏳ 這是相簿貼文，翻頁收圖中…",
+    "description": "相簿貼文，開始翻頁"
+  },
+  "toastAlbumProgress": {
+    "message": "⏳ 翻相簿收圖…已收 $1 張",
+    "description": "翻相簿的進度。$1 是已收張數"
+  },
+  "toastPreparing": {
+    "message": "⏳ 準備寫入…（$1 字・$2 張圖）",
+    "description": "準備寫入。$1 字數、$2 圖片張數"
+  },
+  "toastDone": {
+    "message": "✅ 已收錄\n$1",
+    "description": "收錄成功。$1 是細項，一行一條"
+  },
+  "toastWriteFailed": {
+    "message": "❌ 寫入失敗：$1",
+    "description": "寫入失敗。$1 是原因"
+  },
+  "toastStaleContext": {
+    "message": "擴充剛剛更新過，這個分頁還連著舊版。按 Cmd+R（Windows 是 F5）重新整理這一頁就好。",
+    "description": "擴充更新過，分頁還連著舊版"
+  },
+  "errTimeout3min": {
+    "message": "超過三分鐘沒有回應",
+    "description": "三分鐘沒有回應"
+  },
+  "errNoResponse": {
+    "message": "沒有回應",
+    "description": "沒有回應"
+  },
+  "errUnknown": {
+    "message": "未知錯誤",
+    "description": "未知錯誤"
+  },
+  "btnOpenDoc": {
+    "message": "開啟 Doc ↗",
+    "description": "toast 上的開啟 Doc 連結"
+  },
+  "dupAsk": {
+    "message": "這篇已經收過了（$1）",
+    "description": "這篇收過了。$1 是先前收的時間"
+  },
+  "dupEarlier": {
+    "message": "先前",
+    "description": "先前那一次，時間不明時用這個詞"
+  },
+  "dupOpenPrev": {
+    "message": "開啟已收的那份：$1 ↗",
+    "description": "開啟先前那一份。$1 是 Doc 名稱"
+  },
+  "dupAgain": {
+    "message": "仍要再收一次",
+    "description": "仍要再收一次"
+  },
+  "dupCancel": {
+    "message": "算了",
+    "description": "算了"
+  },
+  "stepAuth": {
+    "message": "確認 Google 授權…",
+    "description": "確認 Google 授權"
+  },
+  "stepFolder": {
+    "message": "確認 Drive 資料夾…",
+    "description": "確認 Drive 資料夾"
+  },
+  "stepCreateDoc": {
+    "message": "建立這篇的 Doc（$1 字）…",
+    "description": "建立 Doc。$1 是字數"
+  },
+  "stepEmbed": {
+    "message": "嵌入 $1 張圖…",
+    "description": "嵌入圖片。$1 是張數"
+  },
+  "stepEmbedOne": {
+    "message": "嵌入圖片 $1/$2…",
+    "description": "逐張嵌入的進度。$1 當前、$2 總數"
+  },
+  "stepF4": {
+    "message": "同步到知識庫…",
+    "description": "同步到知識庫"
+  },
+  "bitDrive": {
+    "message": "Drive「$1」$2",
+    "description": "成功細項：Drive。$1 是 Doc 名、$2 是圖片附註"
+  },
+  "bitDriveImgNote": {
+    "message": "（$1）",
+    "description": "Drive 細項後面的圖片附註。$1 是附註。括號本身跟著語言：中文全形、英文半形"
+  },
+  "bitDriveFailed": {
+    "message": "Drive 失敗：$1",
+    "description": "成功細項：Drive 失敗。$1 是原因"
+  },
+  "bitDriveOff": {
+    "message": "Drive 未啟用",
+    "description": "成功細項：Drive 沒開"
+  },
+  "bitImages": {
+    "message": "圖 $1 張",
+    "description": "成功細項：圖片張數。$1 是張數"
+  },
+  "bitImagesPartial": {
+    "message": "圖 $1/$2",
+    "description": "圖片部分成功。$1 成功、$2 總數"
+  },
+  "bitF4": {
+    "message": "知識庫 $1 片",
+    "description": "成功細項：知識庫。$1 是切片數"
+  },
+  "bitF4Failed": {
+    "message": "知識庫失敗：$1",
+    "description": "成功細項：知識庫失敗。$1 是原因"
+  },
+  "bitF4Off": {
+    "message": "知識庫未啟用",
+    "description": "成功細項：知識庫沒開"
+  },
+  "logLine": {
+    "message": "$1・$2：$3",
+    "description": "寫入紀錄的一行。$1 作者、$2 平台、$3 細項"
+  },
+  "noAuthor": {
+    "message": "未署名",
+    "description": "抓不到作者時填這個。也會進檔名"
+  },
+  "noTopic": {
+    "message": "未命名貼文",
+    "description": "抓不到主題時的檔名"
+  },
+  "docByline": {
+    "message": "$1・$2$3・收錄於 $4",
+    "description": "Doc 第一行的出處。$1 作者、$2 平台、$3 時間、$4 收錄時間"
+  },
+  "docNoPermalink": {
+    "message": "（這一則抓不到原文連結，於 $1 收錄）",
+    "description": "這一則抓不到原文連結。$1 是收錄時所在的頁面"
+  },
+  "docFeed": {
+    "message": "動態牆",
+    "description": "抓不到連結時，頁面寫這個"
+  },
+  "docImagesFailed": {
+    "message": "（另有 $1 張圖嵌入失敗，以下網址通常幾天後就會失效）\n$2",
+    "description": "部分圖片嵌入失敗。$1 張數、$2 網址清單"
+  },
+  "errNoTarget": {
+    "message": "Drive 與 Focus4ai 都沒有啟用，沒有地方可以寫。請點擴充圖示設定其中一個。",
+    "description": "兩個目的地都沒開"
+  },
+  "errNoClientId": {
+    "message": "尚未設定 Google OAuth client_id。照 README 的「OAuth 設定」做一次，把 client_id 填進 manifest.json；或先關掉 Drive、只用 Focus4ai 知識庫。",
+    "description": "manifest 沒填 client_id"
+  },
+  "errNeedsChrome": {
+    "message": "Drive 授權需要 Chrome 本身：這個瀏覽器（Arc／Brave／Edge…）沒有提供 Google 帳號整合。收錄功能與 Focus4ai 知識庫同步不受影響，只有寫進 Drive 這一項要用 Chrome。",
+    "description": "Arc／Brave／Edge 沒有 Google 帳號整合"
+  },
+  "errGoogleAuth": {
+    "message": "Google 授權",
+    "description": "Google 授權這個動作的名字，給逾時訊息用"
+  },
+  "errTimeoutWhat": {
+    "message": "$1逾時（$2 秒沒有回應）",
+    "description": "某個動作逾時。$1 動作名、$2 秒數"
+  },
+  "errTimeoutConn": {
+    "message": "連線逾時（$1 秒）：$2",
+    "description": "連線逾時。$1 秒數、$2 主機"
+  },
+  "errDownload": {
+    "message": "下載失敗 $1",
+    "description": "圖片下載失敗。$1 是狀態碼"
+  },
+  "errUpload": {
+    "message": "上傳失敗 $1",
+    "description": "圖片上傳失敗。$1 是狀態碼"
+  },
+  "errImageTooBig": {
+    "message": "圖片過大",
+    "description": "圖片太大"
+  },
+  "errGoogleApi": {
+    "message": "Google API $1：$2",
+    "description": "Google API 回錯誤。$1 狀態碼、$2 細節"
+  },
+  "errFolderNotFolder": {
+    "message": "指定的 ID 不是有效的資料夾（可能已刪除）",
+    "description": "指定的 ID 不是資料夾"
+  },
+  "errFolderNoAccess": {
+    "message": "無法存取你指定的資料夾。本擴充只有「自己建立的檔案」的權限，請清空這個欄位讓它自動建立，再到 Google Drive 把該資料夾拖到你想要的位置（搬移後仍然有效）。",
+    "description": "存取不到指定的資料夾"
+  },
+  "errBadUrl": {
+    "message": "網址格式不對：$1",
+    "description": "網址格式不對。$1 是輸入的值"
+  },
+  "errNoHostPerm": {
+    "message": "缺少存取 $1 的權限。請點擴充圖示 →「儲存設定」→ 在 Chrome 跳出的確認視窗按「允許」",
+    "description": "缺少存取權限。$1 是來源"
+  },
+  "errNoBase": {
+    "message": "沒有填站台網址",
+    "description": "沒有填站台網址"
+  },
+  "errF4Status": {
+    "message": "站台回 $1$2",
+    "description": "站台回了錯誤狀態。$1 是狀態碼、$2 是 404 的補充"
+  },
+  "errF4Is404": {
+    "message": "（這個網址沒有 /api，確認是站台不是官網）",
+    "description": "404 的補充說明"
+  },
+  "errF4NotJsonLogin": {
+    "message": "回應不是 JSON，通常代表被導到登入頁。請先在這個瀏覽器登入該站台",
+    "description": "回應不是 JSON，大概被導到登入頁"
+  },
+  "errF4NotJsonShort": {
+    "message": "回應不是 JSON（可能被導到登入頁）",
+    "description": "回應不是 JSON（短版）"
+  },
+  "errF4NoMarkdown": {
+    "message": "回應沒有 markdown 欄位",
+    "description": "回應裡沒有 markdown 欄位"
+  },
+  "errF4Write": {
+    "message": "Focus4ai $1：$2",
+    "description": "知識庫寫入失敗。$1 狀態碼、$2 細節"
+  },
+  "errF4WriteFailed": {
+    "message": "寫入失敗",
+    "description": "寫入失敗這四個字，給上面那條當細節的 fallback"
+  },
+  "errTooBig8mb": {
+    "message": "超過 8 MB",
+    "description": "圖片超過 8 MB"
+  },
+  "stepF4Image": {
+    "message": "知識庫存圖 $1/$2…",
+    "description": "把圖存進知識庫的進度。$1 當前、$2 總數"
+  },
+  "mdImagesStored": {
+    "message": "- 圖片：$1/$2 張存進知識庫$3",
+    "description": "Markdown 裡的圖片行。$1 存進去的張數、$2 原文總數、$3 失敗的補充"
+  },
+  "mdImagesSomeFailed": {
+    "message": "（$1 張失敗：$2）",
+    "description": "上面那條的補充。$1 失敗張數、$2 第一個失敗的網址"
+  },
+  "mdImagesCount": {
+    "message": "- 圖片：$1 張",
+    "description": "Markdown 裡的圖片行，只有張數。$1 是張數"
+  },
+  "mdImagesInDrive": {
+    "message": "- 圖片：$1 張 → [在 Drive 文件裡看]($2)",
+    "description": "圖片沒存進知識庫但在 Drive 裡。$1 張數、$2 Doc 連結"
+  },
+  "mdImagesNotStored": {
+    "message": "- 圖片：$1 張（沒有存進來）",
+    "description": "圖片完全沒存進來。$1 是張數"
+  },
+  "p2sNote": {
+    "message": "分級（tier）與對象（subject）要在匯入時指定：分級取決於出版形式，對象取決於你要重建誰，兩個都不是這支擴充知道的事。",
+    "description": "寫進 persona-to-skill 匯入檔的 note 欄位。讀這個檔的是按下匯出的人，所以它跟著介面語言"
+  },
+  "mdTags": {
+    "message": "post-sync, 社群貼文",
+    "description": "Markdown frontmatter 的 tags。知識庫是使用者自己的，標籤跟著他的語言"
+  },
+  "mdAuthorLine": {
+    "message": "- 作者：$1・$2$3",
+    "description": "Markdown 的作者行。$1 作者、$2 平台、$3 時間"
+  },
+  "mdSourceLine": {
+    "message": "- 原文：$1",
+    "description": "Markdown 的原文連結行。$1 是連結或替代字"
+  },
+  "mdNoPermalink": {
+    "message": "（抓不到連結）",
+    "description": "抓不到連結時，原文那一行填這個"
+  },
+  "mdCollectedLine": {
+    "message": "- 收錄：$1",
+    "description": "Markdown 的收錄時間行。$1 是時間"
+  },
+  "docTimeSuffix": {
+    "message": "・$1",
+    "description": "Doc 第一行裡的時間，前面要一個分隔。$1 是時間文字"
+  },
+  "errF4Unreachable": {
+    "message": "連不上：$1（網址對嗎？站台有在跑嗎？）",
+    "description": "連不上知識庫。$1 是原因"
+  },
+  "msgBadUrlLike": {
+    "message": "❌ 網址格式不對，要像 https://app.focus4ai.com",
+    "description": "網址格式不對，附一個對的樣子"
+  },
+  "msgNoPerm": {
+    "message": "❌ 沒有取得存取 $1 的權限，知識庫同步不會運作",
+    "description": "沒拿到權限。$1 是來源"
+  },
+  "msgF4NeedsBase": {
+    "message": "❌ 開了知識庫同步就要填站台網址",
+    "description": "開了同步卻沒填網址"
+  },
+  "msgF4WrongHost": {
+    "message": "❌ focus4ai.com 是官網、沒有 API。線上站台請填 https://app.focus4ai.com",
+    "description": "填了官網而不是 app 子網域"
+  },
+  "msgSaved": {
+    "message": "✅ 已儲存",
+    "description": "存好了"
+  },
+  "msgSavedTestHint": {
+    "message": "✅ 已儲存，建議按一次「測試知識庫連線」確認寫得進去",
+    "description": "存好了，建議測一次連線"
+  },
+  "msgNeedBaseFirst": {
+    "message": "❌ 先填站台網址",
+    "description": "測試前要先填網址"
+  },
+  "msgTesting": {
+    "message": "⏳ 測試中…",
+    "description": "測試中"
+  },
+  "msgTestOk": {
+    "message": "✅ 連得上，知識庫目前有 $1 份文件",
+    "description": "測試成功。$1 是文件數"
+  },
+  "msgTestFailed": {
+    "message": "測試失敗",
+    "description": "測試失敗"
+  },
+  "msgSeenCleared": {
+    "message": "✅ 去重紀錄已清空，之前收過的會被當成新的",
+    "description": "去重紀錄清空了"
+  },
+  "msgP2sExported": {
+    "message": "✅ 匯出 $1 篇：$2",
+    "description": "匯出成功。$1 篇數、$2 檔名"
+  },
+  "msgP2sEmpty": {
+    "message": "❌ 本機沒有留下任何一篇。先打開上面那個開關，再去收幾則貼文",
+    "description": "沒有素材可以匯出"
+  },
+  "msgP2sExportFailed": {
+    "message": "匯出失敗",
+    "description": "匯出失敗"
+  },
+  "msgP2sCleared": {
+    "message": "✅ 匯入檔的素材已清空",
+    "description": "素材清空了"
+  },
+  "msgP2sClearFailed": {
+    "message": "清空失敗",
+    "description": "清空失敗"
+  },
+  "diagNoTab": {
+    "message": "❌ 找不到目前分頁",
+    "description": "找不到分頁"
+  },
+  "diagNoContent": {
+    "message": "❌ 這個分頁沒有 Post Sync（不是支援的平台，或頁面要重新整理一次）",
+    "description": "這個分頁沒有 content script"
+  },
+  "diagBuild": {
+    "message": "版本：$1",
+    "description": "版本。$1 是建置字串"
+  },
+  "diagPlatform": {
+    "message": "平台：$1　頁面：$2",
+    "description": "平台與頁面。$1 平台、$2 路徑"
+  },
+  "diagSelector": {
+    "message": "錨點 $1",
+    "description": "用的錨點。$1 是選擇器"
+  },
+  "diagPostsFound": {
+    "message": "→ 偵測到 $1 則貼文",
+    "description": "偵測到幾則。$1 是數量"
+  },
+  "diagStructDiffers": {
+    "message": "　⚠️ 這一頁的結構不一樣",
+    "description": "這一頁的結構不一樣"
+  },
+  "diagLockedYes": {
+    "message": "目前鎖定：有",
+    "description": "目前鎖定：有"
+  },
+  "diagLockedNo": {
+    "message": "目前鎖定：無（捲動一下）",
+    "description": "目前鎖定：無"
+  },
+  "diagFloatOff": {
+    "message": "⚠️ 浮動按鈕已關閉",
+    "description": "浮動按鈕關掉了"
+  },
+  "diagCandidates": {
+    "message": "這一頁的候選錨點：",
+    "description": "這一頁的候選錨點"
+  },
+  "diagUnsupported": {
+    "message": "不支援",
+    "description": "這個候選在這個平台不支援"
+  },
+  "diagProbeRow": {
+    "message": "$1：$2",
+    "description": "候選錨點的一行。$1 名字、$2 數量或「不支援」。連接號本身也跟著語言走：中文用全形冒號，英文用半形。"
+  },
+  "diagEachPost": {
+    "message": "視窗 $1　偵測到的每一則：",
+    "description": "每一則的位置。$1 是視窗尺寸"
+  },
+  "diagActualDom": {
+    "message": "畫面中央往上的實際結構：",
+    "description": "畫面中央往上的實際結構"
+  },
+  "diagImages": {
+    "message": "圖片：DOM 裡 $1 個 <img>，過濾後收 $2 張",
+    "description": "圖片統計。$1 DOM 裡的數量、$2 收下的張數"
+  },
+  "diagMoreOverlay": {
+    "message": "⚠️ 看到「$1」疊圖。相簿型貼文，其餘的圖根本不在 DOM 裡，不是被濾掉",
+    "description": "看到 +N 疊圖。$1 是那個疊圖上的字"
+  },
+  "diagPhotoLinks": {
+    "message": "/photo 連結：$1 個　翻頁鈕：$2",
+    "description": "photo 連結與翻頁鈕。$1 連結數、$2 有無翻頁鈕"
+  },
+  "diagYes": {
+    "message": "有",
+    "description": "有"
+  },
+  "diagNo": {
+    "message": "無",
+    "description": "無"
+  },
+  "diagButtons": {
+    "message": "這一則裡的按鈕：",
+    "description": "這一則裡的按鈕"
+  },
+  "diagPreview": {
+    "message": "預覽：$1",
+    "description": "內文預覽。$1 是前幾個字"
+  },
+  "diagNoRightClickTarget": {
+    "message": "（沒抓到右鍵的目標）",
+    "description": "右鍵沒抓到目標"
+  },
+  "diagNoAttrs": {
+    "message": "（往上 40 層都沒有任何辨識屬性）",
+    "description": "往上 40 層都沒有辨識屬性"
+  },
+  "diagNoCentreEl": {
+    "message": "（畫面中央取不到元素）",
+    "description": "畫面中央取不到元素"
+  },
+  "diagButtonRow": {
+    "message": "「$1」$2×$3",
+    "description": "這一則裡的某顆按鈕。$1 標籤、$2 寬、$3 高。引號本身也跟著語言走。"
+  },
+  "diagCentreRow": {
+    "message": "y=$1　$2",
+    "description": "畫面中央往上的一層。$1 y 座標、$2 那一層的文字"
+  },
+  "diagNoText": {
+    "message": "（無文字）",
+    "description": "那一層沒有文字"
+  },
+  "diagUnrecognised": {
+    "message": "❌ 認不出這是哪一則貼文",
+    "description": "認不出這是哪一則貼文"
+  },
+  "diagDetectedN": {
+    "message": "・偵測到 $1 則（屬性 $2／種子 $3）",
+    "description": "偵測到 N 則。$1 數量、$2 屬性、$3 種子"
+  },
+  "diagYouClicked": {
+    "message": "・你點的是 $1",
+    "description": "你點的是什麼。$1 是描述"
+  },
+  "diagAncestry": {
+    "message": "・往上這條路上有：\n$1",
+    "description": "往上這條路上有什麼。$1 是清單"
+  },
+  "pickTooShort": {
+    "message": "太矮",
+    "description": "這一則太矮，不像貼文"
+  },
+  "pickAbove": {
+    "message": "在視窗上方",
+    "description": "在視窗上方"
+  },
+  "pickBelow": {
+    "message": "在視窗下方",
+    "description": "在視窗下方"
+  },
+  "pickInvisible": {
+    "message": "不可見",
+    "description": "不可見"
+  },
+  "pickOk": {
+    "message": "✅ 合格",
+    "description": "合格"
+  },
+  "imgInComments": {
+    "message": "留言區的圖",
+    "description": "留言區的圖"
+  },
+  "imgAvatarAlt": {
+    "message": "頭像（alt）",
+    "description": "靠 alt 認出是頭像"
+  },
+  "imgAvatarHeader": {
+    "message": "頭像（在 header 裡）",
+    "description": "在 header 裡的頭像"
+  },
+  "imgTooSmall": {
+    "message": "太小",
+    "description": "這張圖太小。尺寸不寫進這一句，診斷那一行前面已經印了"
+  },
+  "imgLoading": {
+    "message": "[載入中]",
+    "description": "這張圖還在載入。診斷輸出用"
+  },
+  "imgNotHttp": {
+    "message": "不是 http(s) 網址",
+    "description": "不是 http(s) 網址"
+  },
+  "imgKept": {
+    "message": "✅ 收",
+    "description": "收下了"
+  }
+}

@@ -11,6 +11,12 @@
 (function () {
   'use strict';
 
+  // 這一層不碰 chrome.*（檔頭那句話要是真的），所以它不自己去拿 chrome.i18n。
+  // 它回傳訊息的**代碼**，翻譯函式由呼叫端注入一次。沒注入就原樣回傳代碼，
+  // 測試因此看得到代碼本身，而不是某個語言的字。
+  let tr = (key) => key;
+  function setTranslator(fn) { tr = (typeof fn === 'function') ? fn : ((key) => key); }
+
   const NS = self.POST_SYNC;
 
   // 從裡面往外找貼文。
@@ -263,9 +269,9 @@
   // 各寫一份的話，診斷會告訴你「這張有收」而實際上沒有，
   // 那種不一致比沒有診斷更糟。
   function imageVerdict(ad, img, root) {
-    if (!ownedBy(ad, img, root)) return '留言區的圖';
-    if (AVATAR_ALT.test(img.getAttribute('alt') || '')) return '頭像（alt）';
-    if (img.closest('header')) return '頭像（在 header 裡）';
+    if (!ownedBy(ad, img, root)) return tr('imgInComments');
+    if (AVATAR_ALT.test(img.getAttribute('alt') || '')) return tr('imgAvatarAlt');
+    if (img.closest('header')) return tr('imgAvatarHeader');
 
     const r = img.getBoundingClientRect();
     const laidOut = r.width > 0 && r.height > 0;
@@ -274,10 +280,12 @@
     // （40px 頭像、18px reaction icon）就是真的小，不能拿 natural 放行。
     const w = laidOut ? r.width : (img.naturalWidth || 0);
     const h = laidOut ? r.height : (img.naturalHeight || 0);
-    if (w < 120 || h < 120) return `太小（${Math.round(w)}×${Math.round(h)}）`;
+    // 尺寸不寫進理由：診斷那一行前面已經印了 rect 與 natural 兩組尺寸，
+    // 寫第二遍只是把同一個數字再講一次。
+    if (w < 120 || h < 120) return tr('imgTooSmall');
 
     const src = img.currentSrc || img.getAttribute('src') || '';
-    if (!/^https?:\/\//.test(src)) return '不是 http(s) 網址';
+    if (!/^https?:\/\//.test(src)) return tr('imgNotHttp');
     return '';  // 空字串＝要收
   }
 
@@ -322,11 +330,11 @@
     const imgs = [...root.querySelectorAll('img')];
     const rows = imgs.slice(0, 16).map((img) => {
       const r = img.getBoundingClientRect();
-      const why = imageVerdict(ad, img, root) || '✅ 收';
+      const why = imageVerdict(ad, img, root) || tr('imgKept');
       const alt = (img.getAttribute('alt') || '').replace(/\s+/g, ' ').slice(0, 14);
       return `  ${Math.round(r.width)}×${Math.round(r.height)}`
         + ` nat ${img.naturalWidth}×${img.naturalHeight}`
-        + (img.complete ? '' : ' [載入中]')
+        + (img.complete ? '' : ' ' + tr('imgLoading'))
         + (alt ? ` alt="${alt}"` : '')
         + ` → ${why}`;
     });
@@ -386,6 +394,7 @@
 
   self.POST_SYNC_EXTRACT = {
     outermost, outermostOf, ownedBy, readable, clean, cleanAuthor,
+    setTranslator,
     postText, firstText, timeText, permalink, images, imageReport,
     albumOverlay, isAlbum, albumOpener, extract,
   };

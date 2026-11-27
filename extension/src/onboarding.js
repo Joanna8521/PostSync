@@ -1,8 +1,11 @@
+const I = self.POST_SYNC_I18N;
 const btn = document.getElementById('connect');
 const msg = document.getElementById('msg');
 
+I.fill();
+
 btn.addEventListener('click', () => {
-  msg.textContent = '等待 Google 授權視窗…';
+  msg.textContent = I.t('connWaiting');
   msg.className = 'msg';
   chrome.runtime.sendMessage({ type: 'POSTSYNC_CONNECT' }, (res) => {
     if (chrome.runtime.lastError) {
@@ -11,11 +14,12 @@ btn.addEventListener('click', () => {
       return;
     }
     if (res && res.ok) {
-      msg.textContent = '✅ 已連接。收進來的東西只會寫進你自己的 Google Drive。';
+      // 這一句含 **粗體**，所以走 setText 而不是 textContent。
+      I.setText(msg, I.t('obStep1Done'));
       msg.className = 'msg ok';
-      btn.textContent = '重新連接';
+      btn.textContent = I.t('btnReconnect');
     } else {
-      msg.textContent = `❌ ${(res && res.error) || '連接失敗，請再試一次'}`;
+      msg.textContent = `❌ ${(res && res.error) || I.t('connFailedRetry')}`;
       msg.className = 'msg err';
     }
   });
