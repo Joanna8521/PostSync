@@ -10,6 +10,7 @@ const DEF = self.POST_SYNC_DEFAULTS;
 const SYNC_KEYS = [
   'enabled', 'profiles', 'activeProfileId', 'driveEnabled',
   'f4Enabled', 'f4Base', 'f4Folder', 'f4Private', 'albumEnabled',
+  'p2sCollect',
 ];
 
 let profiles = [];
@@ -35,6 +36,7 @@ async function load() {
   $('f4Base').value = s.f4Base || DEF.f4Base;
   $('f4Folder').value = s.f4Folder || DEF.f4Folder;
   $('f4Private').checked = !!s.f4Private;
+  $('p2sCollect').checked = !!s.p2sCollect;
 
   profiles = Array.isArray(s.profiles) && s.profiles.length
     ? s.profiles
@@ -48,6 +50,7 @@ async function load() {
 
   checkConn();
   renderLog();
+  renderP2sCount();
 }
 
 function renderProfiles() {
@@ -178,6 +181,7 @@ $('save').addEventListener('click', () => {
       f4Base,
       f4Folder: $('f4Folder').value.trim() || DEF.f4Folder,
       f4Private: $('f4Private').checked,
+      p2sCollect: $('p2sCollect').checked,
     });
     $('f4Base').value = f4Base;
     msg(f4Enabled ? '✅ 已儲存，建議按一次「測試知識庫」確認寫得進去' : '✅ 已儲存', true);
@@ -308,5 +312,46 @@ async function renderLog() {
     box.appendChild(d);
   }
 }
+
+
+// ── persona-to-skill 匯入檔 ───────────────────────────
+// 檔案不經過任何伺服器：background 把 JSON 字串交回來，這裡做成 blob 讓瀏覽器存檔。
+// 這樣就不必跟使用者要 downloads 權限，權限清單上少一條要解釋的東西。
+
+async function renderP2sCount() {
+  chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_COUNT' }, (res) => {
+    if (chrome.runtime.lastError || !res || !res.ok) return;
+    $('p2sCount').textContent = res.count
+      ? `本機留了 ${res.count} 篇`
+      : '本機還沒有留下任何一篇';
+  });
+}
+
+$('p2sExport').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_EXPORT' }, (res) => {
+    if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
+    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || '匯出失敗'}`, false);
+    if (!res.count) {
+      return msg('❌ 本機沒有留下任何一篇。先打開上面那個開關，再去收幾則貼文', false);
+    }
+    const url = URL.createObjectURL(new Blob([res.json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = res.name;
+    a.click();
+    // 彈出視窗一關，blob 就跟著消失。下載已經開始了，但 URL 自己收掉比較乾淨。
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    msg(`✅ 匯出 ${res.count} 篇：${res.name}`, true);
+  });
+});
+
+$('p2sClear').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'POSTSYNC_P2S_CLEAR' }, (res) => {
+    if (chrome.runtime.lastError) return msg(`❌ ${chrome.runtime.lastError.message}`, false);
+    if (!res || !res.ok) return msg(`❌ ${(res && res.error) || '清空失敗'}`, false);
+    renderP2sCount();
+    msg('✅ 匯入檔的素材已清空', true);
+  });
+});
 
 load();
