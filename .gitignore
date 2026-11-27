@@ -8,3 +8,7 @@ key.pem
 
 # 商店素材（可由 tools/ 重新產生）
 store_assets/
+
+# iCloud 未下載檔案留下的佔位檔。真實原始碼被換成佔位檔、佔位檔進了版控，
+# 線上就會安靜地少掉那些檔案（Dash4AI 曾因此少掉 contact／privacy／terms 三頁）。
+*.icloud
